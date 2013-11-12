@@ -545,7 +545,7 @@ Ext.define('Xnfy.controller.ClassifyMenu', {
                 displayField: 'title',
                 flex: 1,
                 listeners: {
-                    render:function(self){
+                    beforerender:function(self){
                         var menud = self.getRootNode();
                         Ext.create('Xnfy.store.ClassifyMenu').load({params:{indexing:'commodity',sub:1},scope:this,callback:function(records,operation,success){
                             if(success){
@@ -564,6 +564,7 @@ Ext.define('Xnfy.controller.ClassifyMenu', {
                                         record.push({
                                             allowDrag:false,
                                             allowDrop:false,
+                                            // expanded:true,
                                             id:item.data.id,
                                             title:item.data.title,
                                             indexing:item.data.indexing,
@@ -572,7 +573,9 @@ Ext.define('Xnfy.controller.ClassifyMenu', {
                                     }
                                 });
                                 menud.appendChild(record);
-                                menud.expand();
+                                menud.expand(true);
+                                menud.collapseChildren();
+
                             }
                         }});
                     },
@@ -604,7 +607,7 @@ Ext.define('Xnfy.controller.ClassifyMenu', {
                         sortOnDrop:false
                     },
                     listeners: {
-                        nodedragover: function(targetNode, position, dragData){
+                        nodedragover: function(targetNode, position, dragData, e){
                             var allow = true;
                             if(targetNode){
                                 if(targetNode.data.leaf===true){
