@@ -1,0 +1,81 @@
+Ext.define('Xnfy.view.CommodityManageAdd', {
+    extend: 'Ext.panel.Panel',
+    requires: [
+        'Ext.ux.ProgressBarPager',
+        'Xnfy.util.common'
+    ],
+    alias: 'widget.commoditymanageadd',
+    title: 'Tab',
+    closable: true,
+    layout: {
+        type: 'fit'
+    },
+    initComponent: function() {
+        var me = this;
+        Ext.applyIf(me, {
+            items: {
+                layout:'column',
+                xtype:'form',
+                items:[{
+                    columnWidth:0.8,
+                    layout:'form',
+                    bodyStyle:'padding:0 5px 0 5px',
+                    defaults: {
+                        labelWidth:65,
+                        labelStyle:'font-weight:bold',
+                        labelAlign: 'top'
+                        // hideLabel:false
+                    },
+                    items:[{
+                        xtype:'textfield',
+                        fieldLabel:'商品标题'
+                    },{
+                        xtype:'textfield',
+                        fieldLabel:'商品描述'
+                    },{
+                        xtype:'textfield',
+                        fieldLabel:'配　　置'
+                    }]
+                },{
+                    columnWidth:0.2,
+                    layout:'form',
+                    bodyStyle:'padding:0 5px 0 0',
+                    defaults: {
+                        labelAlign: 'top',
+                        hideLabel:true,
+                        // anchor: '100%',
+                        labelStyle: 'font-weight:bold;padding-bottom:5px'
+                        // msgTarget:'side'
+                    },
+                    items:[{
+                        xtype:'textfield',
+                        fieldLabel:'最爱运动'
+                        // width:50
+                    }]
+                }],
+                dockedItems: [{
+                    xtype: 'toolbar',
+                    dock: 'bottom',
+                    ui: 'footer',
+                    items: [
+                        {
+                            xtype: 'tbfill'
+                        },
+                        {
+                            text: '确定',
+                            formBind: true,
+                            handler:function(button){
+                            }
+                        },{
+                            text: '取消',
+                            scope: this,
+                            handler: function(button,e){
+                            }
+                        }
+                    ]
+                }]
+            }
+        });
+        me.callParent(arguments);
+    }
+});

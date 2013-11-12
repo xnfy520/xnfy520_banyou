@@ -1,0 +1,703 @@
+Ext.define('Xnfy.controller.ClassifyMenu', {
+    extend: 'Ext.app.Controller',
+    models: [
+        'ClassifyMenu','ClassifyList'
+    ],
+    stores: [
+        'ClassifyMenu','ClassifyList'
+    ],
+    views: [
+        'Menu','Center'
+    ],
+    init: function(application) {
+        this.control({
+            'xnfymenu [itemId=ClassifyMenu]':{
+                selectionchange:function(t, selecteds){
+                },
+                cellclick:function(self, td, cellIndex, selected,eOpts){
+                    if(selected && !selected.data.leaf){
+                        var center = Ext.getCmp("center");
+                        var panel = Ext.getCmp(selected.id);
+                        if(!panel){
+                            panel =Ext.create('Xnfy.view.ClassifyList');
+                            var form = panel.child('form');
+                            panel.setTitle(selected.data.title+' 分类');
+                            var pid = selected.internalId;
+                            //if(selected.internalId===0){
+                            form.setTitle('添加 分类');
+                            // }else{
+                            //     form.setTitle('添加 '+selected.data.title+' 子类');
+                            // }
+                            this.openClassify(panel,selected.id,pid);
+                        }else{
+                            center.setActiveTab(panel);
+                        }
+                    }
+                },
+                beforeexpand:function(p){
+                    p.getRootNode().expand();
+                },
+                expand:function(p){
+                    p.getRootNode().eachChild(function(i){
+                        if(!i.isExpanded()){
+                            i.expand();
+                        }
+                    });
+                }
+            },
+            'xnfymenu [itemId=Configuration]':{
+                cellclick:function(self, td, cellIndex, selected){
+                    if(selected){
+                        if(selected.internalId=='baseConfiguration'){
+                            var center = Ext.getCmp("center");
+                            var panel = Ext.getCmp(selected.id);
+                            if(!panel){
+                                panel =Ext.create('Xnfy.view.Configuration');
+                                panel.setTitle(selected.data.text);
+                                var pid = selected.internalId;
+                                this.openConfiguration(panel,selected.id,pid);
+                            }else{
+                                center.setActiveTab(panel);
+                            }
+                        }
+                        if(selected.internalId=='brandAllocation'){
+                            this.openBrandAllocation();
+                        }
+                    }
+                }
+            },
+            'xnfymenu [itemId=User]':{
+                cellclick:function(self, td, cellIndex, selected){
+                    if(selected){
+                        var center = Ext.getCmp("center");
+                        var panels = center.getComponent(selected.internalId);
+                        if(panels){
+                            center.setActiveTab(panels);
+                        }else{
+                            switch(selected.internalId){
+                                case 'UserGroup':
+                                    panel =Ext.create('Xnfy.view.UserGroup');
+                                    panel.setTitle(selected.data.text);
+                                    panel.child('form').setTitle('添加 分组');
+                                    this.openUserGroup(panel,selected.internalId);
+                                break;
+                                case 'UserManage':
+                                    panel =Ext.create('Xnfy.view.UserList');
+                                    panel.setTitle(selected.data.text);
+                                    panel.child('form').setTitle('添加 用户');
+                                    this.openUserList(panel,selected.internalId);
+                                break;
+                            }
+                        }
+                    }
+                }
+            },
+            'xnfymenu [itemId=ModuleMenu]':{
+                cellclick:function(self, td, cellIndex, selected){
+                   if(selected){
+                        var center = Ext.getCmp("center");
+                        var panel = center.getComponent(selected.internalId);
+                        if(panel){
+                            center.setActiveTab(panel);
+                        }else{
+                            switch(selected.internalId){
+                                case 'FileManage':
+                                    panel =Ext.create('Xnfy.view.FileManage');
+                                    panel.setTitle(selected.data.text);
+                                    this.openFileManage(panel,selected.internalId);
+                                break;
+                                case 'FileManager':
+                                    panel =Ext.create('Xnfy.view.FileManager');
+                                    panel.setTitle(selected.data.text);
+                                    this.openFileManager(panel,selected.internalId);
+                                break;
+                                case 'ArticleManage':
+                                    panel =Ext.create('Xnfy.view.ArticleList');
+                                    panel.setTitle(selected.data.text);
+                                    this.openArticleManage(panel,selected.internalId);
+                                break;
+                                case 'LinkManage':
+                                    panel =Ext.create('Xnfy.view.LinkList');
+                                    panel.setTitle(selected.data.text);
+                                    panel.child('form').setTitle('添加 链接');
+                                    this.openLinkManage(panel,selected.internalId);
+                                break;
+                                case 'CommodityManage':
+                                    // console.log(selected);
+                                break;
+                            }
+                        }
+                        if(selected.raw.flag && selected.raw.flag=='CommodityManage'){
+                            panel =Ext.create('Xnfy.view.CommodityManage');
+                            panel.setTitle('管理 '+selected.data.text+'商品');
+                            this.openCommodityManage(panel,selected.internalId,selected);
+                        }else{
+                            if(selected.data.id=='brandAllocation'){
+                                this.openBrandAllocation();
+                            }
+                        }
+                    }
+                },
+                beforeexpand:function(p){
+                    var menuc = Ext.ComponentQuery.query('xnfymenu [itemId=ModuleMenu]')[0];
+                    var menud = menuc.getRootNode();
+                    menud.eachChild(function(i){
+                        if(i.internalId=='CommodityManage'){
+                            if(!i.hasChildNodes()){
+                                var stores = Ext.create('Xnfy.store.ClassifyMenu');
+                                var store = stores.load({params:{indexing:'commodity',sub:1},scope:this,callback:function(records,operation,success){
+                                    if(success){
+                                        var record = [];
+                                        Ext.Array.forEach(records,function(item,index,all){
+                                            var record_ = [];
+                                            Ext.Array.forEach(item.data.children,function(items,indexs,alls){
+                                                record_.push({id:items.id,text:items.title,leaf:true,indexing:items.indexing,flag:'CommodityManage',parent:item.raw});
+                                            });
+                                            if(item.raw.indexing!='brands'){
+                                                record.push({id:'CommodityClassify-'+item.data.id,text:item.data.title,indexing:item.data.indexing,leaf:false,children:record_});
+                                            }
+                                        });
+                                        i.appendChild({id:'brandAllocation',text:'品牌分配',leaf:true});
+                                        i.appendChild(record);
+                                        i.expand();
+                                    }
+                                }});
+                            }
+                        }
+                    });
+                },
+                'itemcontextmenu' : function(menutree, selected, items, index, e) {
+                    var nodemenu = new Ext.menu.Menu({});
+                    if(selected.raw.flag && selected.raw.flag=='CommodityManage'){
+                        e.preventDefault();
+                        e.stopEvent();
+                        nodemenu = new Ext.menu.Menu({
+                            floating : true,
+                            items : [{
+                                text : "添加商品",
+                                handler : function() {
+                                    var center = Ext.getCmp("center");
+                                    var panel = center.getComponent(selected.raw.indexing+'-add-'+selected.raw.id);
+                                    if(panel){
+                                        center.setActiveTab(panel);
+                                    }else{
+                                        panel =Ext.create('Xnfy.view.CommodityManageAdd');
+                                        panel.setTitle('添加 '+selected.raw.text+'商品');
+                                        panel.id = selected.raw.indexing+'-add-'+selected.raw.id;
+                                        panel.data = selected.raw;
+                                        center.setActiveTab(center.add(panel));
+                                    }
+                                }
+                            }]
+                        });
+                        nodemenu.showAt(e.getXY());
+                    }
+                    switch(selected.internalId){
+                        case 'ArticleManage':
+                            e.preventDefault();
+                            e.stopEvent();
+                            nodemenu = new Ext.menu.Menu({
+                                floating : true,
+                                items : [{
+                                    text : "添加文章",
+                                    handler : function() {
+                                        var center = Ext.getCmp("center");
+                                        var panel = center.getComponent(selected.internalId+'-add');
+                                        if(panel){
+                                            center.setActiveTab(panel);
+                                        }else{
+                                            panel =Ext.create('Xnfy.view.ArticleAdd');
+                                            panel.setTitle('添加 文章');
+                                            panel.id = selected.internalId+'-add';
+                                            center.setActiveTab(center.add(panel));
+                                        }
+                                    }
+                                }]
+                            });
+                            nodemenu.showAt(e.getXY());
+                        break;
+                    }
+                }
+            }
+        });
+    },
+    openConfiguration:function(panel,id,pid){
+        var n = (typeof panel == "string" ? panel : id || panel.id);
+        var center = Ext.getCmp("center");
+        var tab = center.getComponent(n);
+        if (tab) {
+            center.setActiveTab(tab);
+        } else if(typeof panel!="string"){
+            panel.id = n;
+            center.setActiveTab(center.add(panel));
+            var stores = Ext.create('Xnfy.store.Configuration');
+            var store = stores.load({scope:this,callback:function(records,operation,success){}});
+            panel.child('gridpanel').reconfigure(store);
+        }
+    },
+    openClassify : function (panel,id,pid){
+        var n = (typeof panel == "string" ? panel : id || panel.id);
+        var center = Ext.getCmp("center");
+        var tab = center.getComponent(n);
+        if (tab) {
+            center.setActiveTab(tab);
+        } else if(typeof panel!="string"){
+            panel.id = n;
+            panel.class='classify';
+            panel.openid = pid;
+            var gridpanel = panel.child('gridpanel');
+            var pagingtoolbar = gridpanel.getDockedItems('pagingtoolbar')[0];
+            var stores = Ext.create('Xnfy.store.ClassifyList');
+            var store = stores.load({params:{pid:pid},scope:this,callback:function(records,operation,success){
+                // if(success){
+                //     if(records.length<=0){
+                //         if(panel.child('form')){
+                //             panel.child('form').expand(true);
+                //         }
+                //     }
+                // }
+            }});
+            gridpanel.reconfigure(store);
+            pagingtoolbar.bindStore(store);
+
+            center.setActiveTab(center.add(panel));
+        }
+    },
+    openFileManage : function (panel,id){
+        var n = (typeof panel == "string" ? panel : id || panel.id);
+        var center = Ext.getCmp("center");
+        var tab = center.getComponent(n);
+        if (tab) {
+            center.setActiveTab(tab);
+        } else if(typeof panel!="string"){
+            panel.id = n;
+            var gridpanel = panel.child('gridpanel');
+            var pagingtoolbar = gridpanel.getDockedItems('pagingtoolbar')[0];
+            var stores = Ext.create('Xnfy.store.FileManage');
+            var store = stores.load({scope:this,callback:function(records,operation,success){
+            }});
+            gridpanel.reconfigure(store);
+            pagingtoolbar.bindStore(store);
+            center.setActiveTab(center.add(panel));
+        }
+    },
+    openFileManager : function (panel,id){
+        var n = (typeof panel == "string" ? panel : id || panel.id);
+        var center = Ext.getCmp("center");
+        var tab = center.getComponent(n);
+        if (tab) {
+            center.setActiveTab(tab);
+        } else if(typeof panel!="string"){
+            panel.id = n;
+            var gridpanel = panel.child('gridpanel');
+            center.setActiveTab(center.add(panel));
+        }
+    },
+    openArticleManage : function (panel,id){
+        var n = (typeof panel == "string" ? panel : id || panel.id);
+        var center = Ext.getCmp("center");
+        var tab = center.getComponent(n);
+        if (tab) {
+            center.setActiveTab(tab);
+        } else if(typeof panel!="string"){
+            panel.id = n;
+            var gridpanel = panel.child('gridpanel');
+            var pagingtoolbar = gridpanel.getDockedItems('pagingtoolbar')[0];
+            var stores = Ext.create('Xnfy.store.ArticleList');
+            var store = stores.load({scope:this,callback:function(records,operation,success){
+            }});
+            gridpanel.reconfigure(store);
+            pagingtoolbar.bindStore(store);
+            center.setActiveTab(center.add(panel));
+        }
+    },
+    openLinkManage : function(panel,id,pid){
+        var n = (typeof panel == "string" ? panel : id || panel.id);
+        var center = Ext.getCmp("center");
+        var tab = center.getComponent(n);
+        if (tab) {
+            center.setActiveTab(tab);
+        } else if(typeof panel!="string"){
+            panel.id = n;
+            var gridpanel = panel.child('gridpanel');
+            var pagingtoolbar = gridpanel.getDockedItems('pagingtoolbar')[0];
+            var stores = Ext.create('Xnfy.store.LinkList');
+            var store = stores.load({scope:this,callback:function(records,operation,success){
+                // if(success){
+                //     if(records.length<=0){
+                //         if(panel.child('form')){
+                //             panel.child('form').expand(true);
+                //         }
+                //     }
+                // }
+            }});
+            gridpanel.reconfigure(store);
+            pagingtoolbar.bindStore(store);
+            center.setActiveTab(center.add(panel));
+        }
+    },
+    openUserGroup: function(panel,id){
+        var n = (typeof panel == "string" ? panel : id || panel.id);
+        var center = Ext.getCmp("center");
+        var tab = center.getComponent(n);
+        if (tab) {
+            center.setActiveTab(tab);
+        } else if(typeof panel!="string"){
+            panel.id = n;
+            var gridpanel = panel.child('gridpanel');
+            var pagingtoolbar = gridpanel.getDockedItems('pagingtoolbar')[0];
+            var stores = Ext.create('Xnfy.store.UserGroup');
+            var store = stores.load({scope:this,callback:function(records,operation,success){
+                // if(success){
+                //     if(records.length<=0){
+                //         if(panel.child('form')){
+                //             panel.child('form').expand(true);
+                //         }
+                //     }
+                // }
+            }});
+            gridpanel.reconfigure(store);
+            pagingtoolbar.bindStore(store);
+            center.setActiveTab(center.add(panel));
+        }
+    },
+    openUserList : function(panel,id){
+        var n = (typeof panel == "string" ? panel : id || panel.id);
+        var center = Ext.getCmp("center");
+        var tab = center.getComponent(n);
+        if (tab) {
+            center.setActiveTab(tab);
+        } else if(typeof panel!="string"){
+            panel.id = n;
+            var gridpanel = panel.child('gridpanel');
+            var pagingtoolbar = gridpanel.getDockedItems('pagingtoolbar')[0];
+            var stores = Ext.create('Xnfy.store.UserList');
+            var store = stores.load({scope:this,callback:function(records,operation,success){
+                // if(success){
+                //     if(records.length<=0){
+                //         if(panel.child('form')){
+                //             panel.child('form').expand(true);
+                //         }
+                //     }
+                // }
+            }});
+            gridpanel.reconfigure(store);
+            pagingtoolbar.bindStore(store);
+            center.setActiveTab(center.add(panel));
+        }
+    },
+    openCommodityManage : function(panel,id,obj){
+        // var n = (typeof panel == "string" ? panel : id || panel.id);
+        // var n = obj.id;
+        // console.log(n);
+        // console.log(obj);
+        var n = 'Commodity-List-'+obj.internalId;
+        var center = Ext.getCmp("center");
+        var tab = center.getComponent(n);
+        if (tab) {
+            center.setActiveTab(tab);
+        } else if(typeof panel!="string"){
+            panel.id = n;
+            panel.data = obj.raw;
+            var gridpanel = panel.child('gridpanel');
+            var pagingtoolbar = gridpanel.getDockedItems('pagingtoolbar')[0];
+            var stores = Ext.create('Xnfy.store.CommodityList');
+            var store = stores.load({scope:this,params:{category:obj.internalId},callback:function(records,operation,success){
+            }});
+            gridpanel.reconfigure(store);
+            pagingtoolbar.bindStore(store);
+            center.setActiveTab(center.add(panel));
+        }
+    },
+    openBrandAllocation:function(){
+        Ext.create('Ext.window.Window', {
+            title: '品牌分配',
+            modal:true,
+            height: 500,
+            width: 650,
+            constrain:true,
+            bodyPadding:5,
+            layout: {
+                type: 'hbox',
+                align: 'stretch'
+            },
+            items: [{
+                title: '品牌列表',
+                xtype: 'treepanel',
+                itemId: 'brandsList',
+                header:false,
+                height:407,
+                store: Ext.create('Xnfy.store.ClassifyMenu',{
+                }).load({
+                    params:{indexing:'brands'},
+                    scope:this,
+                    callback:function(records,operation,success){
+                        operation.node.expand();
+                    }
+                }),
+                displayField: 'title',
+                // rootVisible:false,
+                // margin: '0 5 0 0',
+                flex: 1,
+                autoScroll:true,
+                viewConfig: {
+                    plugins: {
+                        displayField: 'title',
+                        ptype: 'treeviewdragdrop',
+                        enableDrag: true,
+                        enableDrop: false
+                    },
+                    copy: true
+                },
+                listeners:{
+                    itemexpand:function(self){
+                        self.updateInfo(true,{title:'品牌列表（'+self.childNodes.length+'个）'});
+                        self.eachChild(function(i){
+                            i.updateInfo(true,{title:i.data.title+(i.data.alias ? '（'+i.data.alias+'）' : '')});
+                        });
+                    }
+                }
+            }, {
+                title: '分配列表',
+                xtype: 'treepanel',
+                itemId: 'brandAllocationStructure',
+                header:false,
+                height:407,
+                autoScroll:true,
+                // rootVisible:false,
+                store: Ext.create('Ext.data.TreeStore', {
+                    fields: [
+                        {
+                            name: 'id',
+                            type:'int'
+                        },
+                        {
+                            name: 'title'
+                        }
+                    ],
+                    root: {
+                        title:'品牌分配',
+                        id:0,
+                        expanded: true,
+                        allowDrop:false
+                    },
+                    listeners:{
+                        beforeremove:function( self, node, isMove, eOpts ){
+                            var s = (self.childNodes.length-1)>0 ? '（已分配 '+(self.childNodes.length)+' 个品牌）' : '';
+                            self.updateInfo(true,{title:self.raw.title+s});
+                        },
+                        remove:function( self, node, isMove, eOpts ){
+                            var s = (self.childNodes.length)>0 ? '（已分配 '+(self.childNodes.length)+' 个品牌）' : '';
+                            self.updateInfo(true,{title:self.raw.title+s});
+                        },
+                        refresh:function(self, eOpts){
+                            var s = (self.childNodes.length)>0 ? '（已分配 '+(self.childNodes.length)+' 个品牌）' : '';
+                            self.updateInfo(true,{title:self.raw.title+s});
+                        },
+                        expand:function(self){
+                            var brands = self.getOwnerTree();
+                            if(brands && brands.previousSibling().getRootNode()){
+                                var root = brands.previousSibling().getRootNode();
+                                Ext.Array.forEach(self.childNodes,function(item,index,all){
+                                    if(item.childNodes.length<=0 && !item.data.leaf){
+                                        // item.updateInfo(true,{loading:true});
+                                        Ext.Ajax.request({
+                                            url:"admin/configuration/getBrandAllocationStructure",
+                                            params:{id:item.raw.id},
+                                            method:'post',
+                                            callback:function(records, operation, success){
+                                                var response = Ext.JSON.decode(success.responseText);
+                                                if(response.success){
+                                                    if(response.data.length>0){
+                                                        var s = response.data.length>0 ? '（已分配 '+(response.data.length)+' 个品牌）' : '';
+                                                        item.updateInfo(true,{title:item.raw.title+s});
+                                                        Ext.Array.forEach(response.data,function(ite,ind,all){
+                                                            var k = getO(root.childNodes,ite.id);
+                                                            item.appendChild(k);
+                                                        });
+                                                    }
+                                                    // item.updateInfo(true,{loading:false});
+                                                }else{
+                                                    // item.updateInfo(true,{loading:false});
+                                                    Ext.create('Xnfy.util.common').uxNotification(false,response.msg);
+                                                }
+                                            }
+                                        });
+                                    }
+                                });
+                            }
+                            function getO(node,id){
+                                var news = {};
+                                var n = 0;
+                                Ext.Array.forEach(node,function(item,index,all){
+                                    n++;
+                                    if(item.data.id==id){
+                                        news = item.copy('new-'+item.data.id+'-'+(Math.random()+1)+'-'+n);
+                                        item.raw.title = item.data.title;
+                                        news.updateInfo(true,{id:item.raw.id});
+                                    }
+                                });
+                                return news;
+                            }
+                        }
+                    }
+                }),
+                displayField: 'title',
+                flex: 1,
+                listeners: {
+                    render:function(self){
+                        var menud = self.getRootNode();
+                        Ext.create('Xnfy.store.ClassifyMenu').load({params:{indexing:'commodity',sub:1},scope:this,callback:function(records,operation,success){
+                            if(success){
+                                var record = [];
+                                Ext.Array.forEach(records,function(item,index,all){
+                                    if(item.data.indexing!='brands'){
+                                        var record_ = [];
+                                        Ext.Array.forEach(item.data.children,function(items,indexs,alls){
+                                            record_.push({
+                                                allowDrag:false,
+                                                id:items.id,
+                                                title:items.title,
+                                                indexing:items.indexing
+                                            });
+                                        });
+                                        record.push({
+                                            allowDrag:false,
+                                            allowDrop:false,
+                                            id:item.data.id,
+                                            title:item.data.title,
+                                            indexing:item.data.indexing,
+                                            children:record_
+                                        });
+                                    }
+                                });
+                                menud.appendChild(record);
+                                menud.expand();
+                            }
+                        }});
+                    },
+                    'itemcontextmenu' : function(menutree, selected, items, index, e) {
+                        var nodemenu = new Ext.menu.Menu({});
+                        if(!!selected.raw.leaf){
+                            e.preventDefault();
+                            e.stopEvent();
+                            nodemenu = new Ext.menu.Menu({
+                                floating : true,
+                                items : [{
+                                    text : "删除",
+                                    handler : function(self) {
+                                        console.log(selected.remove());
+                                    }
+                                }]
+                            });
+                            nodemenu.showAt(e.getXY());
+                        }
+                    }
+                },
+                viewConfig: {
+                    plugins: {
+                        ptype: 'treeviewdragdrop',
+                        displayField: 'title',
+                        enableDrag: true,
+                        enableDrop: true,
+                        appendOnly: false,
+                        sortOnDrop:false
+                    },
+                    listeners: {
+                        nodedragover: function(targetNode, position, dragData){
+                            var allow = true;
+                            if(targetNode){
+                                if(targetNode.data.leaf===true){
+                                    if(dragData.view.id!=this.id){
+                                        if(targetNode.parentNode.childNodes.length>0){
+                                            Ext.Array.forEach(targetNode.parentNode.childNodes,function(items,indexs,alls){
+                                                if(items.data.id==dragData.records[0].data.id){
+                                                    allow = false;
+                                                }
+                                            });
+                                            if(allow){
+                                                return true;
+                                            }else{
+                                                return false;
+                                            }
+                                        }
+                                    }else{
+                                        if(dragData.records[0].parentNode.id==targetNode.parentNode.id){
+                                            return true;
+                                        }else{
+                                            if(targetNode.parentNode.childNodes.length>0){
+                                                Ext.Array.forEach(targetNode.parentNode.childNodes,function(items,indexs,alls){
+                                                    if(items.data.id==dragData.records[0].data.id){
+                                                        allow = false;
+                                                    }
+                                                });
+                                                if(allow){
+                                                    return true;
+                                                }else{
+                                                    return false;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                if(targetNode.childNodes.length>0){
+                                    Ext.Array.forEach(targetNode.childNodes,function(items,indexs,alls){
+                                        if(items.data.id==dragData.records[0].data.id){
+                                            allow = false;
+                                        }
+                                    });
+                                    if(allow){
+                                        return true;
+                                    }else{
+                                        return false;
+                                    }
+                                }
+                            }
+                        },
+                        drop:function( node, data, overModel, dropPosition){
+                            if(overModel.data.leaf){
+                                var ss = overModel.parentNode.childNodes.length>0 ? '（已分配 '+(overModel.parentNode.childNodes.length)+' 个品牌）' : '';
+                                overModel.parentNode.updateInfo(true,{title:overModel.parentNode.raw.title+ss});
+                            }else{
+                                var s = overModel.childNodes.length>0 ? '（已分配 '+(overModel.childNodes.length)+' 个品牌）' : '';
+                                overModel.updateInfo(true,{title:overModel.raw.title+s});
+                            }
+                            if(overModel.store.ownerTree){
+                                overModel.store.ownerTree.getView().refresh();
+                            }
+                        }
+                    }
+                }
+            }],
+            dockedItems: [{
+                xtype: 'toolbar',
+                dock: 'bottom',
+                ui: 'footer',
+                items: [{
+                        xtype: 'tbfill'
+                    },{
+                        text: '确认修改',
+                        formBind: true,
+                        handler:function(button){
+                            var tree = this.up('window').queryById('brandAllocationStructure');
+                            var nodes = tree.getRootNode();
+                            var structure = nodes.serialize()['children'];
+                            Ext.Ajax.request({
+                                url:"admin/configuration/saveBrandAllocationStructure",
+                                params:{structure:JSON.stringify(structure)},
+                                method:'post',
+                                callback:function(records, operation, success){
+                                    var response = Ext.JSON.decode(success.responseText);
+                                    if(response.success){
+                                        Ext.create('Xnfy.util.common').uxNotification(true,'修改成功');
+                                    }else{
+                                         Ext.create('Xnfy.util.common').uxNotification(false,'修改失败');
+                                    }
+                                }
+                            });
+                        }
+                    }]
+            }]
+        }).show();
+    }
+});

@@ -1,0 +1,275 @@
+[
+  {
+    "leaf" : false,
+    "id" : 4,
+    "title" : "手机专区",
+    "parentId" : 0,
+    "children" : [
+      {
+        "leaf" : false,
+        "id" : 43,
+        "title" : "手机（已分配 1 个品牌）",
+        "parentId" : 4,
+        "children" : [
+          {
+            "indexing" : "",
+            "alias" : "Apple",
+            "sort" : 99,
+            "id" : "193",
+            "parentId" : 43,
+            "title" : "苹果（Apple）",
+            "leaf" : true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "leaf" : false,
+    "id" : 5,
+    "title" : "电脑专区",
+    "parentId" : 0,
+    "children" : [
+      {
+        "leaf" : false,
+        "id" : 44,
+        "title" : "笔记本（已分配 1 个品牌）",
+        "parentId" : 5,
+        "children" : [
+          {
+            "indexing" : "",
+            "alias" : "NOKIA",
+            "sort" : 99,
+            "id" : "195",
+            "parentId" : 44,
+            "title" : "诺基亚（NOKIA）",
+            "leaf" : true
+          }
+        ]
+      },
+      {
+        "leaf" : false,
+        "id" : 47,
+        "title" : "平板电脑（已分配 1 个品牌）",
+        "parentId" : 5,
+        "children" : [
+          {
+            "indexing" : "",
+            "alias" : "SONY",
+            "sort" : 99,
+            "id" : "196",
+            "parentId" : 47,
+            "title" : "索尼（SONY）",
+            "leaf" : true
+          }
+        ]
+      },
+      {
+        "leaf" : false,
+        "id" : 48,
+        "title" : "一体机（已分配 1 个品牌）",
+        "parentId" : 5,
+        "children" : [
+          {
+            "indexing" : "",
+            "alias" : "HUAWEI",
+            "sort" : 99,
+            "id" : "199",
+            "parentId" : 48,
+            "title" : "华为（HUAWEI）",
+            "leaf" : true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "leaf" : false,
+    "id" : 6,
+    "title" : "相机专区",
+    "parentId" : 0,
+    "children" : [
+      {
+        "leaf" : false,
+        "id" : 55,
+        "title" : "数码相机（已分配 2 个品牌）",
+        "parentId" : 6,
+        "children" : [
+          {
+            "indexing" : "",
+            "alias" : "Motorola",
+            "sort" : 99,
+            "id" : "202",
+            "parentId" : 55,
+            "title" : "摩托罗拉（Motorola）",
+            "leaf" : true
+          },
+          {
+            "indexing" : "",
+            "alias" : "NOKIA",
+            "sort" : 99,
+            "id" : "195",
+            "parentId" : 55,
+            "title" : "诺基亚（NOKIA）",
+            "leaf" : true
+          }
+        ]
+      },
+      {
+        "leaf" : false,
+        "id" : 56,
+        "title" : "单电相机（已分配 3 个品牌）",
+        "parentId" : 6,
+        "children" : [
+          {
+            "indexing" : "",
+            "alias" : "Lenovo",
+            "sort" : 99,
+            "id" : "198",
+            "parentId" : 56,
+            "title" : "联想（Lenovo）",
+            "leaf" : true
+          },
+          {
+            "indexing" : "",
+            "alias" : "MI",
+            "sort" : 99,
+            "id" : "201",
+            "parentId" : 56,
+            "title" : "小米（MI）",
+            "leaf" : true
+          },
+          {
+            "indexing" : "",
+            "alias" : "SONY",
+            "sort" : 99,
+            "id" : "196",
+            "parentId" : 56,
+            "title" : "索尼（SONY）",
+            "leaf" : true
+          }
+        ]
+      },
+      {
+        "leaf" : false,
+        "id" : 57,
+        "title" : "单反相机（已分配 3 个品牌）",
+        "parentId" : 6,
+        "children" : [
+          {
+            "indexing" : "",
+            "alias" : "MEIZU",
+            "sort" : 99,
+            "id" : "200",
+            "parentId" : 57,
+            "title" : "魅族（MEIZU）",
+            "leaf" : true
+          },
+          {
+            "indexing" : "",
+            "alias" : "MI",
+            "sort" : 99,
+            "id" : "201",
+            "parentId" : 57,
+            "title" : "小米（MI）",
+            "leaf" : true
+          },
+          {
+            "indexing" : "",
+            "alias" : "Lenovo",
+            "sort" : 99,
+            "id" : "198",
+            "parentId" : 57,
+            "title" : "联想（Lenovo）",
+            "leaf" : true
+          }
+        ]
+      },
+      {
+        "leaf" : false,
+        "id" : 58,
+        "title" : "镜头（已分配 2 个品牌）",
+        "parentId" : 6,
+        "children" : [
+          {
+            "indexing" : "",
+            "alias" : "Motorola",
+            "sort" : 99,
+            "id" : "202",
+            "parentId" : 58,
+            "title" : "摩托罗拉（Motorola）",
+            "leaf" : true
+          },
+          {
+            "indexing" : "",
+            "alias" : "ZTE",
+            "sort" : 99,
+            "id" : "204",
+            "parentId" : 58,
+            "title" : "中兴（ZTE）",
+            "leaf" : true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "leaf" : false,
+    "id" : 7,
+    "title" : "配件专区",
+    "parentId" : 0,
+    "children" : [
+      {
+        "leaf" : false,
+        "id" : 59,
+        "title" : "手机配件（已分配 1 个品牌）",
+        "parentId" : 7,
+        "children" : [
+          {
+            "indexing" : "",
+            "alias" : "HUAWEI",
+            "sort" : 99,
+            "id" : "199",
+            "parentId" : 59,
+            "title" : "华为（HUAWEI）",
+            "leaf" : true
+          }
+        ]
+      },
+      {
+        "leaf" : false,
+        "id" : 60,
+        "title" : "电脑配件（已分配 1 个品牌）",
+        "parentId" : 7,
+        "children" : [
+          {
+            "indexing" : "",
+            "alias" : "MI",
+            "sort" : 99,
+            "id" : "201",
+            "parentId" : 60,
+            "title" : "小米（MI）",
+            "leaf" : true
+          }
+        ]
+      },
+      {
+        "leaf" : false,
+        "id" : 61,
+        "title" : "相机配件（已分配 1 个品牌）",
+        "parentId" : 7,
+        "children" : [
+          {
+            "indexing" : "",
+            "alias" : "MEIZU",
+            "sort" : 99,
+            "id" : "200",
+            "parentId" : 61,
+            "title" : "魅族（MEIZU）",
+            "leaf" : true
+          }
+        ]
+      }
+    ]
+  }
+]
