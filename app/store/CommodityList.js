@@ -5,9 +5,6 @@ Ext.define('Xnfy.store.CommodityList', {
     ],
     model: 'Xnfy.model.CommodityList',
     storeId: 'CommodityList',
-    groupDir:'DESC',
-    autoLoad: true,
-    groupField:'name',
     sorters:[{property:'id',direction:'DESC'}],
     constructor: function(cfg) {
         var me = this;
@@ -42,11 +39,25 @@ Ext.define('Xnfy.store.CommodityList', {
             remoteFilter: true,
             listeners: {
                 beforeload: function(t){
-                    // var tab = Ext.getCmp("center").getActiveTab();
-                    // var pid = tab.openid?tab.openid:0;
-                    // if(pid>=0){
-                    //     Ext.apply(this.proxy.extraParams, { pid: pid});
-                    // }
+                    var tab = Ext.getCmp("center").getActiveTab();
+                    if(tab.data){
+                        // Ext.apply(this.proxy.extraParams, { category: tab.data.id});
+                        var brand_search = tab.queryById('brandSearch');
+                        console.log(brand_search.getValue());
+                        console.log(tab.data.id);
+                        var data = {category: tab.data.id};
+                        if(brand_search){
+                            var brand = brand_search.getValue();
+                            if(brand==0){
+                                data = {category: tab.data.id,brand:''};
+                            }else if(brand<0){
+                                data = {category: tab.data.id,brand:0};
+                            }else{
+                                data = {category: tab.data.id,brand:brand};
+                            }
+                        }
+                        Ext.apply(this.proxy.extraParams, data);
+                    }
                 }
             }
         }, cfg)]);

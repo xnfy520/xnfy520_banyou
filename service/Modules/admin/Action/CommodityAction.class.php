@@ -11,6 +11,10 @@ class CommodityAction extends CommonAction {
 			$search['category'] = $_GET['category'];
 		}
 
+		if(isset($_GET['brand']) && $_GET['brand']!=''){
+			$search['brand'] = $_GET['brand'];
+		}
+
 		if(isset($_GET['query']) && !empty($_GET['query'])){
 			$search['_string'] = 'title like "%'.$_GET['query'].'%" OR indexing like "%'.$_GET['query'].'%" OR name like "%'.$_GET['query'].'%"';
 		}
@@ -38,6 +42,28 @@ class CommodityAction extends CommonAction {
 						"data"=>$list,
 						"total"=>$counts
 					));
+	}
+
+	function getBrand(){
+		$structure = F("BrandAllocationStructure");
+		if($structure && isset($_GET['category'])){
+			$struc = array();
+			$structure = json_decode(stripslashes($structure),true);
+			foreach($structure as $key=>$value){
+				foreach($value['children'] as $k=>$v){
+					if($v['id']==$_GET['category']){
+						if(count($v['children'])>0){
+							$struc = $v['children'];
+						}
+					}
+				}
+			}
+			array_unshift($struc,array('id'=>0,'title'=>'全部品牌'), array('id'=>-1,'title'=>'未分配品牌'));
+			echo json_encode(array(
+						"success"=>true,
+						"data"=>$struc
+					));
+		}
 	}
 
 	function insert(){

@@ -1,23 +1,3 @@
-var store = Ext.create('Ext.data.Store', {
-    storeId:'employeeStore',
-    fields:['name', 'seniority', 'department'],
-    groupField: 'department',
-    data: {'employees':[
-        { "name": "Michael Scott",  "seniority": 7, "department": "Management" },
-        { "name": "Dwight Schrute", "seniority": 2, "department": "Sales" },
-        { "name": "Jim Halpert",    "seniority": 3, "department": "Sales" },
-        { "name": "Kevin Malone",   "seniority": 4, "department": "Accounting" },
-        { "name": "Angela Martin",  "seniority": 5, "department": "Accounting" }
-    ]},
-    proxy: {
-        type: 'memory',
-        reader: {
-            type: 'json',
-            root: 'employees'
-        }
-    }
-});
-
 Ext.define('Xnfy.view.CommodityManage', {
     extend: 'Ext.panel.Panel',
     requires: [
@@ -32,6 +12,7 @@ Ext.define('Xnfy.view.CommodityManage', {
     },
     initComponent: function() {
         var me = this;
+        // console.log(category);
         Ext.applyIf(me, {
             items: [
                         {
@@ -50,15 +31,19 @@ Ext.define('Xnfy.view.CommodityManage', {
                                     dataIndex: 'id',
                                     width:60,
                                     hidden:true
+                                },{
+                                    text: '商品名称',
+                                    dataIndex: 'name',
+                                    width:150,
+                                    renderer:function(value,metaData,record,rowIndex,colIndex,store,view){
+                                        var flag = record.data.master==1 ? ' <span class="icon-circle" style="float:right;color:red"></span>' : '';
+                                        return value+flag;
+                                    }
                                 },
                                 {
                                     text: '商品标题',
                                     dataIndex: 'title',
                                     flex: 1
-                                },{
-                                    text: '商品名称',
-                                    dataIndex: 'name',
-                                    width:150
                                 },
                                 { text: '商品索引',  dataIndex: 'indexing' },
                                 {
@@ -113,6 +98,52 @@ Ext.define('Xnfy.view.CommodityManage', {
                                     xtype: 'toolbar',
                                     dock: 'top',
                                     items: [
+                                        {
+                                            fieldLabel: '选择品牌',
+                                            itemId:'brandSearch',
+                                            hideLabel:true,
+                                            store: Ext.create('Ext.data.Store', {
+                                                autoLoad: true,
+                                                fields: ['title', 'id'],
+                                                proxy: {
+                                                     type: 'ajax',
+                                                     url: 'admin/commodity/getBrand',
+                                                     reader: {
+                                                         type: 'json',
+                                                         root: 'data'
+                                                     }
+                                                 },
+                                                 listeners:{
+                                                     beforeload: function(t){
+                                                        Ext.apply(this.proxy.extraParams, { category: me.data.id});
+                                                     }
+                                                 }
+                                            }),
+                                            emptyText:'选择品牌',
+                                            // editable : false,
+                                            xtype:'combobox',
+                                            queryMode: 'local',
+                                            displayField: 'title',
+                                            valueField: 'id',
+                                            // value:0,
+                                            listeners:{
+                                                afterrender:function(self){
+                                                    self.setValue(0);
+                                                },
+                                                select:function( self, record, eOpts ){
+                                                    var brand = record[0].data.id;
+                                                    var panel = self.up('commoditymanage');
+                                                    self.up('gridpanel').getStore().reload();
+                                                    // if(brand==0){
+                                                    //     self.up('gridpanel').getStore().load();
+                                                    // }else if(brand<0){
+                                                    //     self.up('gridpanel').getStore().reload({params:{brand:0}});
+                                                    // }else{
+                                                    //     self.up('gridpanel').getStore().reload({params:{brand:brand}});
+                                                    // }
+                                                }
+                                            }
+                                        },
                                         {
                                             xtype: 'searchfield',
                                             emptyText: '输入搜索关字',
@@ -178,21 +209,7 @@ Ext.define('Xnfy.view.CommodityManage', {
                                     displayInfo: true,
                                     plugins: Ext.create('Ext.ux.ProgressBarPager', {})
                                 }
-                            ],
-                            store: Ext.create('Xnfy.store.CommodityList'),
-                            features: [{
-                                ftype: 'grouping',
-                                groupByText:'字段分组',
-                                showGroupsText:'显示分组',
-                                groupHeaderTpl: '{name}',
-                                listeners:{
-                                    groupclick:function( view, node, group, e, eOpts ){
-                                        console.log(view);
-                                    }
-                                }
-                                // hideGroupedHeader: false,
-                                // startCollapsed: true
-                            }]
+                            ]
                         }
                     ]
         });
