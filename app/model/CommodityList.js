@@ -1,10 +1,10 @@
 Ext.define('Xnfy.model.CommodityList', {
     extend: 'Ext.data.Model',
     fields:[
-		{name:'id',type:'int'},
+		// {name:'id',type:'int'},
+		'id',
 		'name',
 		'title',
-		'indexing',
 		{name:'pid',type:'int'},
 		'views',
 		'market_price',
@@ -12,7 +12,6 @@ Ext.define('Xnfy.model.CommodityList', {
 		'enabled',
 		'cover',
 		'master',
-		'release_date',
 		'create_date',
 		'modify_date',
 		{name:'brand',type:'int'}

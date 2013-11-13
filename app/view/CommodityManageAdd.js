@@ -12,7 +12,7 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
     },
     initComponent: function() {
         var me = this;
-        var hid = ['accessorie_division'];
+        var hid = ['accessorie_division']; //如果是配件专区,开启配件搭配价格
         Ext.applyIf(me, {
             items:[{
                 xtype: 'form',
@@ -402,7 +402,7 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                         change:function(self,newValue){
                                             if(newValue){
                                                 var form = self.up('form').getForm();
-                                                var master = ['indexing','release_date','name'];
+                                                var master = ['name'];
                                                 var slave = ['pid'];
                                                 Ext.Array.forEach(master,function(item,index,all){
                                                     form.findField(item).allowBlank = false;
@@ -413,8 +413,8 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                                     form.findField(item).setVisible(false);
                                                     form.findField(item).reset();
                                                 });
-                                                form.findField('indexing').allowBlank = true;
                                                 form.checkValidity();
+                                                me.queryById('sycndata').setVisible(false);
                                             }
                                         }
                                     }
@@ -426,7 +426,7 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                         change:function(self,newValue){
                                             if(newValue){
                                                 var form = self.up('form').getForm();
-                                                var master = ['indexing','release_date','name'];
+                                                var master = ['name'];
                                                 var slave = ['pid'];
                                                 Ext.Array.forEach(master,function(item,index,all){
                                                     form.findField(item).allowBlank = true;
@@ -438,66 +438,61 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                                     form.findField(item).setVisible(true);
                                                 });
                                                 form.checkValidity();
+                                                me.queryById('sycndata').setVisible(true);
                                             }
                                         }
                                     }
                                 }
                             ]
                         },{
-                            xtype: 'tbseparator'
-                        },{
-                            fieldLabel: '商品索引',
-                            xtype:'textfield',
-                            name:'indexing',
-                            labelStyle: 'font-weight:bold',
-                            margin: '0 10 0 0',
-                            labelWidth: 60,
-                            width:170,
-                            allowBlank: true,
-                            emptyText:'商品唯一索引',
-                            stripCharsRe:new RegExp(/[\W]/i)
-                        },{
-                            xtype: 'datefield',
-                            format: 'Y-m-d',
-                            name: 'release_date',
-                            fieldLabel: '发布日期',
-                            labelWidth: 60,
-                            allowBlank: false,
-                            labelStyle: 'font-weight:bold',
-                            margin: '0 10 0 0',
-                            width:165,
-                            value: new Date(),
-                            minValue: '1970-01-01',
-                            maxValue: new Date(),
-                            listeners:{
-                                change:function(self, newValue, oldValue, eOpts){
-                                }
-                            }
-                        },{
                             xtype: 'combobox',
                             fieldLabel: '所属商品',
                             labelWidth: 60,
                             labelStyle: 'font-weight:bold',
                             name:'pid',
-                            store: Ext.create('Xnfy.store.ArticleSelect'),
+                            validateOnChange:false,
+                            store: Ext.create('Xnfy.store.CommoditySelect',{
+                                listeners:{
+                                    beforeload:function(){
+                                        var form = me.child('form').getForm();
+                                        var brand = form.findField('brand').value;
+                                        var post = {master: 1};
+                                        if(me.data.id && brand==0){
+                                            post = { master: 1,category:me.data.id,brand:''};
+                                        }else if(me.data.id && brand>0){
+                                            post = { master: 1,category:me.data.id,brand:brand};
+                                        }else if(me.data.id){
+                                            post = { master: 1,category:me.data.id};
+                                        }
+                                        Ext.apply(this.proxy.extraParams, post);
+                                    }
+                                }
+                            }),
                             displayField: 'title',
                             hideTrigger:true,
                             width:170,
-                            margin: '0 10 0 0',
+                            margin: '0 3 0 0',
                             allowBlank: true,
                             hidden:true,
                             hideLabel:false,
-                            emptyText:'商品唯一索引',
-                            stripCharsRe:new RegExp(/[\W]/i),
+                            emptyText:'主商品搜索',
+                            // stripCharsRe:new RegExp(/[\W]/i),
                             pageSize: 10,
-                            selectOnFocus : true,
+                            valueField:'id',
+                            vtype:'commodity_combobox_number',
+                            minChars:1,
+                            selectOnFocus : false,
                             listConfig: {
                                 loadingText: '正在搜索...',
-                                emptyText: '没有匹配的结果',
+                                emptyText: '<span style="padding-left:10px">没有匹配的结果</span>',
                                 minWidth:335,
+                                padding:'10 0 0 0',
                                 listeners:{
+                                    render:function(self){
+
+                                    },
                                     select:function(self, record){
-                                        console.log(record);
+                                        me.queryById('sycndata').setDisabled(false);
                                     }
                                 }
                                 // Custom rendering template for each item
@@ -509,15 +504,66 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                 // }
                             },
                             listeners:{
+                                change:function(self, newValue, oldValue){
+                                    if(typeof(newValue)=='number'){
+                                        me.queryById('sycndata').setDisabled(false);
+                                    }else{
+                                        me.queryById('sycndata').setDisabled(true);
+                                    }
+                                    me.child('form').getForm().checkValidity();
+                                },
                                 beforequery:function(){
                                     //console.log('stop');
                                     //return false;
                                 },
                                 specialkey: function(field, e){
-                                    if (e.getKey() == e.ENTER) {
-                                        var form = field.up('form').getForm();
-                                        Ext.create('Xnfy.util.common').uxNotification(true,'info');
-                                        console.log('form');
+                                    // if (e.getKey() == e.ENTER) {
+                                    //     var form = field.up('form').getForm();
+                                    //     Ext.create('Xnfy.util.common').uxNotification(true,'info');
+                                    //     console.log('form');
+                                    // }
+                                }
+                            }
+                        },{
+                            xtype: 'button',
+                            itemId:'sycndata',
+                            margin:'0 10 0 0',
+                            hidden: true,
+                            text:'同步主数据',
+                            disabled:true,
+                            listeners:{
+                                click:function( self, e, eOpts ){
+                                    var form = self.up('form').getForm();
+                                    var pid = form.findField('pid');
+                                    if(pid){
+                                        self.up('form').setLoading(true);
+                                        Ext.Ajax.request({
+                                            url:"admin/commodity/getCommodity",
+                                            method:'POST',
+                                            params:{id:pid.value},
+                                            callback:function(records, operation, success){
+                                                var response = Ext.JSON.decode(success.responseText);
+                                                if(response.success){
+                                                    response.data.pid = pid.value;
+                                                    response.data.master = 0;
+                                                    if(response.data.cover){
+                                                        form.findField('combobox_image').setValue(1);
+                                                        me.queryById('cover').setSrc(response.data.cover);
+                                                        me.queryById('cover').setVisible(true);
+                                                    }else{
+                                                        form.findField('combobox_image').setValue(0);
+                                                        form.owner.queryById('cover').setSrc('');
+                                                        form.owner.queryById('cover').setVisible(false);
+                                                    }
+                                                    form.setValues(response.data);
+                                                    Ext.create('Xnfy.util.common').uxNotification(true,'获取数据成功');
+                                                    self.up('form').setLoading(false);
+                                                }else{
+                                                    Ext.create('Xnfy.util.common').uxNotification(false,'获取数据失败');
+                                                    self.up('form').setLoading(false);
+                                                }
+                                            }
+                                        });
                                     }
                                 }
                             }
@@ -563,6 +609,7 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                 params.classifys = JSON.stringify(classify_values);
                             }
                             if(form.isValid()){
+                                // console.log(form.getValues());
                                 form.submit({
                                         waitMsg:'正在处理数据...',
                                         params:params,

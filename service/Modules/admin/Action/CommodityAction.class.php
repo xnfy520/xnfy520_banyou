@@ -15,8 +15,12 @@ class CommodityAction extends CommonAction {
 			$search['brand'] = $_GET['brand'];
 		}
 
+		if(isset($_GET['master']) && !empty($_GET['master'])){
+			$search['master'] = $_GET['master'];
+		}
+
 		if(isset($_GET['query']) && !empty($_GET['query'])){
-			$search['_string'] = 'title like "%'.$_GET['query'].'%" OR indexing like "%'.$_GET['query'].'%" OR name like "%'.$_GET['query'].'%"';
+			$search['_string'] = 'id like "%'.$_GET['query'].'%" OR title like "%'.$_GET['query'].'%" OR name like "%'.$_GET['query'].'%"';
 		}
 
 		$counts = $MODULE_NAME->where($search)->count();
@@ -44,6 +48,35 @@ class CommodityAction extends CommonAction {
 					));
 	}
 
+	function getCommodity(){
+		import("@.ORG.Util.emit_ajax_page");
+		$MODULE_NAME = M(MODULE_NAME);
+		if(isset($_POST['id']) && !empty($_POST['id'])){
+			$data = $MODULE_NAME->find($_POST['id']);
+			$classifys = json_decode($data['classifys'],true);
+			$datas = array_merge($data,$classifys);
+			if(empty($datas['brand'])){
+				unset($datas['brand']);
+			}
+			if($datas){
+				echo json_encode(array(
+						"success"=>true,
+						"data"=>$datas
+					));
+			}else{
+				echo json_encode(array(
+						"success"=>false,
+						"errors"=>array("msg"=>"获取数据失败")
+					));
+			}
+		}else{
+			echo json_encode(array(
+						"success"=>false,
+						"errors"=>array("msg"=>"异常操作")
+					));
+		}
+	}
+
 	function getBrand(){
 		$structure = F("BrandAllocationStructure");
 		if($structure && isset($_GET['category'])){
@@ -69,15 +102,6 @@ class CommodityAction extends CommonAction {
 	function insert(){
 		$MODULE_NAME = D(MODULE_NAME);
 		if($data = $MODULE_NAME->create()){
-			$indexing_exist = $MODULE_NAME->where('indexing<>"" AND indexing="'.$_POST['indexing'].'"')->count();
-			if($indexing_exist>0){
-				echo json_encode(array(
-					"success"=>false,
-					"errors"=>array("msg"=>"商品索引已经存在")
-				));
-				return;
-			}
-			$data['release_date'] = strtotime($data['release_date']);
 			$data['create_date'] = time();
 			if($id = $MODULE_NAME->add($data)){
 				$data['id'] = $id;

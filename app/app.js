@@ -29,3 +29,10 @@ Ext.application({
 });
 Ext.grid.RowEditor.prototype.saveBtnText = "保存";
 Ext.grid.RowEditor.prototype.cancelBtnText = '取消';
+
+Ext.apply(Ext.form.VTypes, {
+    commodity_combobox_number: function(val, field) {
+        return /^\d+$/.test(field.value);
+    },
+    commodity_combobox_numberText: '请选择所属商品'
+});

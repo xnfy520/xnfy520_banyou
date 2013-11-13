@@ -41,10 +41,7 @@ Ext.define('Xnfy.store.CommodityList', {
                 beforeload: function(t){
                     var tab = Ext.getCmp("center").getActiveTab();
                     if(tab.data){
-                        // Ext.apply(this.proxy.extraParams, { category: tab.data.id});
                         var brand_search = tab.queryById('brandSearch');
-                        console.log(brand_search.getValue());
-                        console.log(tab.data.id);
                         var data = {category: tab.data.id};
                         if(brand_search){
                             var brand = brand_search.getValue();

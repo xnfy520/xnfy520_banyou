@@ -45,7 +45,14 @@ Ext.define('Xnfy.view.CommodityManage', {
                                     dataIndex: 'title',
                                     flex: 1
                                 },
-                                { text: '商品索引',  dataIndex: 'indexing' },
+                                {
+                                    text:'商品价格',
+                                    dataIndex: 'selling_price',
+                                    align:'right',
+                                    renderer:function(value,metaData,record,rowIndex,colIndex,store,view){
+                                        return '&yen; '+Ext.util.Format.number(value,'0,000.00');
+                                    }
+                                },
                                 {
                                     text: '启用',
                                     dataIndex: 'enabled',
