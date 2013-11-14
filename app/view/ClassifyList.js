@@ -609,53 +609,6 @@ Ext.define('Xnfy.view.ClassifyList', {
                                     itemId:'addEdit',
                                     formBind: true,
                                     handler:function(button){
-                                        // var panel = button.up('form').up('panel');
-                                        // var form = button.up('form'); //获取表单组件
-                                        // var center = Ext.getCmp("center");
-                                        // var values = form.getForm().getFieldValues(true);
-                                        // var pid = form.getForm().findField('pid').getStore().getRootNode().internalId;
-                                        // if(values.pid==pid || !values.pid){
-                                        //     form.getForm().setValues({pid:0});
-                                        //     pids = 0;
-                                        // }else{
-                                        //     pids = values.pid;
-                                        // }
-                                        // if(form.getForm().findField('id') && form.getForm().findField('id').value>0){
-                                        //     form.getForm().submit({
-                                        //         waitMsg:'正在处理数据...',
-                                        //         method:'POST',
-                                        //         params:{pid:pids},
-                                        //         url:'admin/link/update',
-                                        //         submitEmptyText:false,
-                                        //         success:function(f, response){
-                                        //             form.getForm().setValues({pid:values.pid});
-                                        //             panel.child('gridpanel').getStore().reload();
-                                        //             Ext.create('Xnfy.util.common').uxNotification(true,'修改数据成功',3000);
-                                        //         },
-                                        //         failure:function(f, response){
-                                        //             Ext.create('Xnfy.util.common').uxNotification(false,response.result.errors.msg,5000);
-                                        //         }
-                                        //     });
-                                        // }else{
-                                        //     form.getForm().submit({
-                                        //             params:{pid:pids},
-                                        //             waitMsg:'正在处理数据...',
-                                        //             method:'POST',
-                                        //             submitEmptyText:false,
-                                        //             url:'admin/link/insert',
-                                        //             success:function(f, response){
-                                        //                 panel.child('gridpanel').getStore().reload();
-                                        //                 form.getForm().reset();
-                                        //                 form.getForm().setValues({pid:pid});
-                                        //                 form.queryById('base').expand();
-                                        //                 Ext.create('Xnfy.util.common').uxNotification(true,'添加数据成功',3000);
-                                        //             },
-                                        //             failure:function(f, response){
-                                        //                 Ext.create('Xnfy.util.common').uxNotification(false,response.result.errors.msg,5000);
-                                        //             }
-                                        //         });
-                                        // }
-
                                         var panel = button.up('form').up('panel');
                                         var pid = panel.openid; //获取当前pid
                                         var form = button.up('form'); //获取表单组件
@@ -725,6 +678,7 @@ Ext.define('Xnfy.view.ClassifyList', {
                                                             }
                                                         });
                                                         form.getForm().reset();
+                                                        form.queryById('base').expand();
                                                         Ext.create('Xnfy.util.common').uxNotification(true,'添加数据成功',3000);
                                                     },
                                                     failure:function(f, response){

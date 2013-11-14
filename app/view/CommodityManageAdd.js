@@ -308,6 +308,28 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                     listeners:{
                         render:function(){
                             this.el.applyStyles('background:white');
+                        },
+                        afterrender:function(){
+                            var commodityParams =  this.queryById('commodityParams');
+                            var form = this.child('form').getForm();
+                            var params = form.findField('params');
+                            if(me.data){
+                                 Ext.Ajax.request({
+                                    url:"admin/commodity/getParameter",
+                                    method:'POST',
+                                    params:{pid:me.data.id},
+                                    callback:function(records, operation, success){
+                                        var response = Ext.JSON.decode(success.responseText);
+                                        params.setValue(Ext.JSON.encode(response.data));
+                                        // console.log(response);
+                                        // if(response.success){
+                                        //     var root = commodityParams.getRootNode();
+                                        //     root.appendChild(response.data);
+                                        //     console.log(root);
+                                        // }
+                                    }
+                                });
+                            }
                         }
                     },
                     items:[{
@@ -337,15 +359,19 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                     resize:function(me){
                                     }
                                 }
+                            },{
+                                xtype:'textarea',
+                                name:'params',
+                                fieldLabel:'商品参数'
                             }],
                             listeners: {
                                 afterlayout:function(me){
-                                    me.down('tinymce').editor.settings.height = me.el.dom.clientHeight-70;
+                                    // me.down('tinymce').editor.settings.height = me.el.dom.clientHeight-70;
                                 },
                                 resize:function(me){
-                                    if(Ext.get(me.down('tinymce').id+'-inputEl_ifr')){
-                                        Ext.get(me.down('tinymce').id+'-inputEl_ifr').set({style:'height:'+(me.el.dom.clientHeight-70)+'px'});
-                                    }
+                                    // if(Ext.get(me.down('tinymce').id+'-inputEl_ifr')){
+                                    //     Ext.get(me.down('tinymce').id+'-inputEl_ifr').set({style:'height:'+(me.el.dom.clientHeight-70)+'px'});
+                                    // }
                                 }
                             }
                     },{
@@ -354,8 +380,88 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                         items: []
                     },{
                         title:'详细参数',
-                        layout: 'fit',
-                        items: []
+                        // layout: 'fit',
+                        xtype:'treepanel',
+                        itemId:'commodityParams',
+                        rootVisible: false,
+                        useArrows:true,
+                        singleExpand: true,
+                        columns: [{
+                            xtype: 'treecolumn',
+                            text: '参数名',
+                            dataIndex: "title",
+                            width:300,
+                            // flex: 0.3,
+                            sortable: false
+                        },
+                        {
+                            text: "参数值",
+                            dataIndex: "value",
+                            // flex: 0.4,
+                            width:400,
+                            sortable: false,
+                            editor: 'textfield',
+                            renderer:function(value,metaData,record,rowIndex,colIndex,store,view){
+                                var v = Ext.util.Format.stripTags(value);
+                                if(v){
+                                    metaData.tdAttr = 'data-qtip="' + v + '"';
+                                }
+                                return v;
+                            }
+                        }],
+                        plugins: [
+                            Ext.create('Ext.grid.plugin.CellEditing', {
+                                clicksToEdit: 1,
+                                listeners: {
+                                    cancelEdit: function(editor, context) {
+                                       // console.log(editor);
+                                    },
+                                    beforeedit:function(editor, context){
+                                        // console.log(editor);
+                                        // console.log(context);
+                                        if(!context.record.data.leaf){
+                                            return false;
+                                        }
+                                    },
+                                    edit:function(editor, context){
+                                        // console.log(editor);
+                                        // console.log(context);
+                                    }
+                                }
+                            })
+                        ],
+                        store:Ext.create("Ext.data.TreeStore", {
+                            fields: [
+                                "title", "value"
+                            ],
+                            root: {
+                                title: 'root',
+                                id: 'root',
+                                expanded:true
+                            }
+                        }),
+                        listeners:{
+                            afterrender:function(self){
+                                var form = me.child('form').getForm();
+                                var params = form.findField('params');
+                                var root = self.getRootNode();
+                                root.appendChild(Ext.JSON.decode(params.getValue()));
+                            }
+                        },
+                        dockedItems: [{
+                            xtype: 'toolbar',
+                            items: [
+                            '->',{
+                                xtype:'button',
+                                text:'保存数据',
+                                listeners:{
+                                    click:function(){
+                                        var params = me.queryById('commodityParams');
+                                        console.log(params.getRootNode().serialize());
+                                    }
+                                }
+                            }]
+                        }]
                     },{
                         title: '库存状态',
                         layout: 'fit',

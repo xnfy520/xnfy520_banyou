@@ -100,6 +100,27 @@ class CommodityAction extends CommonAction {
 		}
 	}
 
+	function getParameter(){
+		$Classify = M('Classify');
+		if(isset($_POST['pid']) && !empty($_POST['pid'])){
+			$search['indexing'] = 'parameter';
+			$search['pid'] = $_POST['pid'];
+			$data = $Classify->where($search)->find();
+			if($data){
+				$result = $Classify->field('id,title,alias,leaf')->where('pid='.$data['id'].' AND enabled=1')->order('sort,id')->select();
+				foreach($result as $key=>$value){
+					$result[$key]['children'] = $Classify->field('id,title,leaf')->where('pid='.$value['id'].' AND enabled=1')->order('sort,id')->select();
+				}
+				if($result){
+					echo json_encode(array(
+						"success"=>true,
+						"data"=>$result
+					));
+				}
+			}
+		}
+	}
+
 	function insert(){
 		$MODULE_NAME = D(MODULE_NAME);
 		if($data = $MODULE_NAME->create()){
