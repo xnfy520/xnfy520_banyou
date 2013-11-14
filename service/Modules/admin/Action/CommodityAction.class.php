@@ -49,19 +49,20 @@ class CommodityAction extends CommonAction {
 	}
 
 	function getCommodity(){
-		import("@.ORG.Util.emit_ajax_page");
 		$MODULE_NAME = M(MODULE_NAME);
 		if(isset($_POST['id']) && !empty($_POST['id'])){
 			$data = $MODULE_NAME->find($_POST['id']);
 			$classifys = json_decode($data['classifys'],true);
-			$datas = array_merge($data,$classifys);
-			if(empty($datas['brand'])){
-				unset($datas['brand']);
+			if($classifys){
+				$data = array_merge($data,$classifys);
 			}
-			if($datas){
+			if(empty($data['brand'])){
+				unset($data['brand']);
+			}
+			if($data){
 				echo json_encode(array(
 						"success"=>true,
-						"data"=>$datas
+						"data"=>$data
 					));
 			}else{
 				echo json_encode(array(
@@ -102,6 +103,14 @@ class CommodityAction extends CommonAction {
 	function insert(){
 		$MODULE_NAME = D(MODULE_NAME);
 		if($data = $MODULE_NAME->create()){
+			$title_exist = $MODULE_NAME->where('title<>"" AND title="'.$_POST['title'].'"')->count();
+            if($title_exist>0){
+                    echo json_encode(array(
+                            "success"=>false,
+                            "errors"=>array("msg"=>"商品标题已经存在")
+                    ));
+                    return;
+            }
 			$data['create_date'] = time();
 			if($id = $MODULE_NAME->add($data)){
 				$data['id'] = $id;

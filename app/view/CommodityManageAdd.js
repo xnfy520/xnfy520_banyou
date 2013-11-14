@@ -114,7 +114,7 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                     },{
                         xtype:'form',
                         itemId:'commodity_classify',
-                        title:'商品类别',
+                        title:'筛选信息',
                         autoScroll:true,
                         fieldDefaults: {
                             labelAlign: 'top',
@@ -455,14 +455,16 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                 listeners:{
                                     beforeload:function(){
                                         var form = me.child('form').getForm();
-                                        var brand = form.findField('brand').value;
                                         var post = {master: 1};
-                                        if(me.data.id && brand==0){
-                                            post = { master: 1,category:me.data.id,brand:''};
-                                        }else if(me.data.id && brand>0){
-                                            post = { master: 1,category:me.data.id,brand:brand};
-                                        }else if(me.data.id){
-                                            post = { master: 1,category:me.data.id};
+                                        if(form.findField('brand')){
+                                            var brand = form.findField('brand').value;
+                                            if(me.data.id && brand==0){
+                                                post = { master: 1,category:me.data.id,brand:''};
+                                            }else if(me.data.id && brand>0){
+                                                post = { master: 1,category:me.data.id,brand:brand};
+                                            }else if(me.data.id){
+                                                post = { master: 1,category:me.data.id};
+                                            }
                                         }
                                         Ext.apply(this.proxy.extraParams, post);
                                     }
@@ -529,7 +531,7 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                             itemId:'sycndata',
                             margin:'0 10 0 0',
                             hidden: true,
-                            text:'同步主数据',
+                            text:'同步数据',
                             disabled:true,
                             listeners:{
                                 click:function( self, e, eOpts ){
@@ -546,6 +548,9 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                                 if(response.success){
                                                     response.data.pid = pid.value;
                                                     response.data.master = 0;
+                                                    if(!response.data.brand){
+                                                        form.findField('brand').setValue(0);
+                                                    }
                                                     if(response.data.cover){
                                                         form.findField('combobox_image').setValue(1);
                                                         me.queryById('cover').setSrc(response.data.cover);
