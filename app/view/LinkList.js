@@ -114,7 +114,6 @@ Ext.define('Xnfy.view.LinkList', {
                                     // margin:'25px 0 0 0',
                                     labelStyle: 'font-weight:bold;padding-bottom:5px',
                                     store:Ext.create('Xnfy.store.ClassifyMenu').load({params:{indexing:'link'},callback:function(records,operation,success){
-                                        console.log(records);
                                         var response = Ext.decode(operation.response.responseText);
                                         var link_search_treepicker = me.queryById('link_search_treepicker');
                                         if(success && records.length>0){

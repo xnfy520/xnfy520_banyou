@@ -1,7 +1,4 @@
-<?php if (!defined('THINK_PATH')) exit();?><!DOCTYPE html>
-
-<!-- Auto Generated with Sencha Architect -->
-<!-- Modifications to this file will be overwritten. -->
+<?php if (!defined('THINK_PATH')) exit();?><!doctype html>
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -13,7 +10,6 @@
 			font-size:16px;
 			text-indent:2px;
 		}
-
        /* #instructions ul li {
             list-style-type:disc;
             list-style-position:outside;
