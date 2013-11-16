@@ -110,6 +110,7 @@ class CommodityAction extends CommonAction {
 				$result = $Classify->field('id,title,alias,leaf')->where('pid='.$data['id'].' AND enabled=1')->order('sort,id')->select();
 				foreach($result as $key=>$value){
 					$result[$key]['children'] = $Classify->field('id,title,leaf')->where('pid='.$value['id'].' AND enabled=1')->order('sort,id')->select();
+					// $result[$key]['value'] = count($result[$key]['children']);
 				}
 				if($result){
 					echo json_encode(array(

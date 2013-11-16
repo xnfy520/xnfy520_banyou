@@ -59,24 +59,24 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                             xtype:'textareafield',
                             allowBlank: false,
                             rows:2,
-                            emptyText:'商品标题',
-                            margin:'0 0 -5 0'
+                            emptyText:'商品标题'
+                            // margin:'0 0 -5 0'
                         }, {
                             fieldLabel: '商品简介',
                             xtype: 'textareafield',
                             name: 'description',
                             anchor:'100%',
                             rows:2,
-                            emptyText:'商品简介',
-                            margin:'0 0 -5 0'
+                            emptyText:'商品简介'
+                            // margin:'0 0 -5 0'
                         }, {
                             fieldLabel: '商品配置',
                             xtype: 'textareafield',
                             name: 'collocate',
                             anchor:'100%',
                             rows:2,
-                            emptyText:'商品配置',
-                            margin:'0 0 -5 0'
+                            emptyText:'商品配置'
+                            // margin:'0 0 -5 0'
                         },{
                             fieldLabel: '市场价格',
                             name: 'market_price',
@@ -404,8 +404,9 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                             sortable: false,
                             editor: 'textfield',
                             renderer:function(value,metaData,record,rowIndex,colIndex,store,view){
-                                var v = Ext.util.Format.stripTags(value);
-                                if(v){
+                                var v = value;
+                                if(record.data.leaf==true){
+                                    v = Ext.util.Format.stripTags(value);
                                     metaData.tdAttr = 'data-qtip="' + v + '"';
                                 }
                                 return v;
@@ -466,6 +467,9 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                     root.appendChild(Ext.JSON.decode(render_params.getValue()));
                                 }
                                 var params = form.findField('params');
+                                root.eachChild(function(params_item){
+                                    params_item.updateInfo(true,{value:'<i><small>共 '+params_item.childNodes.length+' 项</small></i>'});
+                                });
                                 if(params.getValue()){
                                     var params_value = Ext.JSON.decode(params.getValue());
                                     if(params && params_value.length>0){
@@ -515,10 +519,209 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                         items: []
                     },{
                         title: '相关资讯',
-                        layout: 'fit',
-                        items: []
+                        xtype: 'panel',
+                        itemId:'aboutInformation',
+                        layout: 'border',
+                        bodyStyle:'background:white;',
+                        margin:'-5px',
+                        listeners:{
+                            afterrender:function(self){
+                                var stores = Ext.create('Xnfy.store.CommodityArticle');
+                                var store = stores.load({scope:this,callback:function(records,operation,success){
+                                }});
+                                self.queryById('aboutInformationType1').reconfigure(store);
+                                self.queryById('pagingtoolbarType1').bindStore(store);
+                            }
+                        },
+                        items: [{
+                            xtype: 'gridpanel',
+                            itemId:'aboutInformationType1',
+                            flex: 1,
+                            region: 'west',
+                            title: '资讯列表',
+                            header:false,
+                            multiSelect: true,
+                            viewConfig: {
+                                // copy:true,
+                                plugins: {
+                                    ptype: 'gridviewdragdrop',
+                                    enableDrop:false
+                                },
+                                listeners: {
+                                    drop: function(node, data, dropRec, dropPosition) {
+                                    }
+                                }
+                            },
+                            style: {
+                                borderStyle: 'solid',
+                                borderWidth:"0 5px 0 0",
+                                borderColor:"#ADD2ED"
+                            },
+                            store: Ext.create('Xnfy.store.CommodityArticle'),
+                            columns: [
+                                { text: '#',  dataIndex: 'id', width:50, hidden:true },
+                                { text: '标题', dataIndex: 'title', flex: 1 },
+                                { text: '创建时间', dataIndex: 'create_date', flex: 1, hidden:true }
+                            ],
+                            dockedItems: [{
+                                xtype: 'toolbar',
+                                padding:'5px 0 5px 5px',
+                                items: [{
+                                    itemId:'search_treepicker_type1',
+                                    xtype: 'treepicker',
+                                    // fieldLabel:'所属分类',
+                                    // flex: 1,
+                                    autoScroll:true,
+                                    anchor:'100%',
+                                    minPickerHeight:'auto',
+                                    maxPickerHeight:200,
+                                    emptyText:'无分类选择',
+                                    blankText:'无分类选择',
+                                    displayField : 'title',
+                                    value:{},
+                                    // margin:'25px 0 0 0',
+                                    labelStyle: 'font-weight:bold;padding-bottom:5px',
+                                    store:Ext.create('Xnfy.store.ClassifyMenu').load({params:{indexing:'article'},callback:function(records,operation,success){
+                                        var response = Ext.decode(operation.response.responseText);
+                                        var this_treepicker = me.queryById('search_treepicker_type1');
+                                        if(success && records.length>0){
+                                            this_treepicker.store.setRootNode({title:'所有文章',id:response.pid,expanded:true});
+                                            this_treepicker.store.getRootNode().appendChild({title:'未分类文章',id:-1,leaf:true});
+                                            this_treepicker.setValue(response.pid);
+                                            this_treepicker.store.getRootNode().expand(true);
+                                        }else{
+                                            this_treepicker.disable();
+                                        }
+                                    }}),
+                                    listeners:{
+                                        afterrender:function( self, eOpts ){
+                                        },
+                                        select:function( self, record, eOpts ){
+                                            self.collapse();
+                                            if(record.data.root){
+                                                self.up('gridpanel').getStore().load();
+                                            }else if(record.data.id<0){
+                                                self.up('gridpanel').getStore().reload({params:{pid:0}});
+                                            }else{
+                                                self.up('gridpanel').getStore().reload({params:{pid:record.data.id}});
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    xtype: 'combobox',
+                                    itemId:'search_combobox_type1',
+                                    name:"type",
+                                    anchor:'100%',
+                                    width:70,
+                                    emptyText : '类型',
+                                    mode : 'local',// 数据模式，local代表本地数据
+                                    //readOnly : false,// 是否只读
+                                    editable : false,// 是否允许输入
+                                    //forceSelection : true,// 必须选择一个选项
+                                    //blankText : '请选择',// 该项如果没有选择，则提示错误信息,
+                                    store:Ext.create('Ext.data.Store', {
+                                        fields: ['text', 'type'],
+                                        data : [
+                                            {"text":"全部", "type":0},
+                                            {"text":"图文", "type":1},
+                                            {"text":"视频", "type":2}
+                                        ]
+                                    }),
+                                    // value:0,
+                                    displayField:'text',
+                                    valueField:'type',
+                                    listeners: {
+                                      change:function(self,n,o){
+                                        self.up('gridpanel').getStore().reload({params:{type:n}});
+                                      }
+                                    }
+                                },
+                                {
+                                    xtype: 'searchfield',
+                                    width:120,
+                                    emptyText: '输入关键字',
+                                    store:Ext.create('Xnfy.store.CommodityArticle')
+                                    // width:200
+                                }]
+                            },{
+                                xtype: 'pagingtoolbar',
+                                itemId:'pagingtoolbarType1',
+                                dock: 'bottom',
+                                displayInfo: true,
+                                displayMsg:'{0} {1} of {2}'
+                            }]
+                        },{
+                            xtype: 'gridpanel',
+                            region: 'center',
+                            itemId:'aboutInformationType2',
+                            flex: 1,
+                            title: '添加资讯',
+                            header:false,
+                            multiSelect: true,
+                            viewConfig: {
+                                plugins: {
+                                    ptype: 'gridviewdragdrop'
+                                },
+                                listeners: {
+                                    drop: function(node, data, dropRec, dropPosition) {
+                                        console.log(node);
+                                        console.log(data);
+                                        console.log(dropRec);
+                                        // if(overModel.data.leaf){
+                                        //     var ss = overModel.parentNode.childNodes.length>0 ? '（已分配 '+(overModel.parentNode.childNodes.length)+' 个品牌）' : '';
+                                        //     overModel.parentNode.updateInfo(true,{title:overModel.parentNode.raw.title+ss});
+                                        // }else{
+                                        //     var s = overModel.childNodes.length>0 ? '（已分配 '+(overModel.childNodes.length)+' 个品牌）' : '';
+                                        //     overModel.updateInfo(true,{title:overModel.raw.title+s});
+                                        // }
+                                        // if(overModel.store.ownerTree){
+                                        //     overModel.store.ownerTree.getView().refresh();
+                                        // }
+                                    }
+                                }
+                            },
+                            store: Ext.create('Ext.data.Store', {
+                                fields:['id', 'title', 'create_date'],
+                                data:{'items':[
+                                    { 'id': 0, 'title': 'Lisa' },
+                                    { 'id': 1, 'title': 'Bart' },
+                                    { 'id': 2, 'title': 'Homer' },
+                                    { 'id': 3, 'title': 'Marge' }
+                                ]},
+                                proxy: {
+                                    type: 'memory',
+                                    reader: {
+                                        type: 'json',
+                                        root: 'items'
+                                    }
+                                }
+                            }),
+                            columns: [
+                                { text: '#',  dataIndex: 'id', width:50, hidden:true },
+                                { text: '标题', dataIndex: 'title', flex: 1 },
+                                { text: '创建时间', dataIndex: 'create_date', flex: 1, hidden:true }
+                            ],
+                            dockedItems: [{
+                                xtype: 'toolbar',
+                                padding:'5px 0 5px 5px',
+                                items: [{
+                                    xtype: 'displayfield',
+                                    labelSeparator:'',
+                                    fieldLabel: '添加资讯',
+                                    labelWidth:60,
+                                    labelStyle:'font-weight:bold'
+                                }]
+                            },{
+                                    xtype: 'pagingtoolbar',
+                                    dock: 'bottom',
+                                    displayInfo: true,
+                                    displayMsg:'{1} of {2}'
+                            }]
+                        }]
                     },{
                         title: '相关视频',
+                        itemId:'aboutVideo',
                         layout: 'fit',
                         items: []
                     }]
@@ -759,7 +962,16 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                         formBind: true,
                         handler: function(self) {
                             var form = self.up('form').getForm();
+                            var values = form.getFieldValues(true);
                             form.reset();
+                            var render_params = form.findField('render_params');
+                            render_params.setValue(values.render_params);
+
+                            var commodityParams = me.queryById('commodityParams');
+                            var commodityParamsRoot = commodityParams.getRootNode();
+
+                            commodityParamsRoot.removeAll();
+                            commodityParamsRoot.appendChild(Ext.JSON.decode(values.render_params));
                         }
                     },{
                         text: '确认添加',

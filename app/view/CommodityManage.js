@@ -22,7 +22,7 @@ Ext.define('Xnfy.view.CommodityManage', {
                                 injectCheckbox:'last'
                             },
                             viewConfig: {
-                                stripeRows: false
+                                // stripeRows: false
                             },
                             border:false,
                             columns: [
