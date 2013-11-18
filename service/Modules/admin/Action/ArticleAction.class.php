@@ -56,6 +56,57 @@ class ArticleAction extends CommonAction {
 		
 	}
 
+	function byFilter(){
+
+		import("@.ORG.Util.emit_ajax_page");
+
+		$MODULE_NAME = D(MODULE_NAME);
+
+		if(isset($_GET['pid']) && $_GET['pid']!=''){
+			$search['pid'] = $_GET['pid'];
+		}
+
+		if(isset($_GET['query']) && !empty($_GET['query'])){
+			$search['_string'] = 'title like "%'.$_GET['query'].'%" OR indexing like "%'.$_GET['query'].'%"';
+		}
+
+		if(isset($_GET['type']) && !empty($_GET['type'])){
+			$search['type'] = $_GET['type'];
+		}
+
+		if(isset($_GET['informations_ids']) && !empty($_GET['informations_ids'])){
+			$search['id']  = array('not in',$_GET['informations_ids']);
+		}
+
+		if(isset($_GET['videos_ids']) && !empty($_GET['videos_ids'])){
+			$search['id']  = array('not in',$_GET['videos_ids']);
+		}
+
+		$counts = $MODULE_NAME->where($search)->count();
+
+		$page = new page($counts,$_GET['limit'],$_GET['page'] ? $_GET['page'] : 0);
+
+		$sort = 'id DESC';
+		if(isset($_GET['sort'])){
+			$params = json_decode(stripslashes($_GET['sort']),true);
+			if(is_array($params)){
+				$min_sort = array();
+				for($i=0;$i<count($params);$i++){
+					$min_sort[] = implode(' ', $params[$i]);
+				}
+			}
+			$sort = implode(',', $min_sort);
+		}
+
+
+		$list = $MODULE_NAME->field('details',true)->where($search)->limit($page->limit)->order($sort)->select();
+		echo json_encode(array(
+						"success"=>true,
+						"data"=>$list,
+						"total"=>$counts
+					));
+	}
+
 	function getList(){
 		if(isset($_GET['pid'])){
 			$pid = is_numeric($_GET['pid']) ? $_GET['pid'] : 0;
@@ -82,6 +133,51 @@ class ArticleAction extends CommonAction {
 			echo json_encode(array(
 						"success"=>false,
 						"errors"=>array("msg"=>"异常操作")
+					));
+		}
+	}
+
+	function getRelation(){
+		if(isset($_POST['indexing']) && !empty($_POST['indexing'])){
+			$Classify = M('Classify');
+			$where['indexing'] = 'article';
+			$where['enabled'] = 1;
+			$article = $Classify->where($where)->find();
+			$flag = false;
+			if($article){
+				$where['pid'] = $article['id'];
+				$where['indexing'] = 'information';
+				$information = $Classify->where($where)->find();
+				if($information){
+					$where['pid'] = $information['id'];
+					$where['indexing'] = $_POST['indexing'];
+					$list = $Classify->where($where)->find();
+					if($list){
+						$flag = true;
+					}else{
+						$flag = false;
+					}
+				}else{
+					$flag = false;
+				}
+			}else{
+				$flag = false;
+			}
+			if($flag){
+				echo json_encode(array(
+						"success"=>true,
+						"data"=>$list
+					));
+			}else{
+				echo json_encode(array(
+						"success"=>false,
+						"errors"=>array("msg"=>"异常操作")
+					));
+			}
+		}else{
+			echo json_encode(array(
+						"success"=>false,
+						"errors"=>array("msg"=>"异常操作!")
 					));
 		}
 	}

@@ -16,7 +16,7 @@ Ext.define('Xnfy.store.CommodityArticle', {
                 type: 'ajax',
                 actionMethods: {create: 'POST', read: 'GET', update: 'POST', destroy: 'POST'},
                 api:{
-                    read: 'admin/article',
+                    read: 'admin/article/byFilter',
                     create : 'admin/articlemanage/insert',
                     update: 'admin/articlemanage/update',
                     destroy: 'admin/articlemanage/delete'
@@ -44,59 +44,68 @@ Ext.define('Xnfy.store.CommodityArticle', {
                     var tab = Ext.getCmp("center").getActiveTab();
                     var tabpanelCenter = tab.queryById('tabpanelCenter');
                     var ctab = tabpanelCenter.getActiveTab();
+                    var form = tab.child('form').getForm();
+                    var type = 0;
+                    var informations_ids = [];
+                    var videos_ids = [];
                     if(ctab){
                         switch(ctab.itemId){
                             case 'aboutInformation':
-                                treepicker = ctab.queryById('search_treepicker_type1');
-                                combobox = ctab.queryById('search_combobox_type1');
+                                type = 1;
+                                var informations = form.findField('informations').getValue();
+                                if(informations){
+                                    var informations_result = Ext.JSON.decode(informations);
+                                    if(informations_result){
+                                        Ext.Array.forEach(informations_result,function(item,index){
+                                            informations_ids.push(item.id);
+                                        });
+                                        informations_ids.toString();
+                                    }
+                                }
                             break;
                             case 'aboutVideo':
-                                treepicker = ctab.queryById('search_treepicker_type2');
-                                combobox = ctab.queryById('search_combobox_type2');
+                                type = 2;
+                                var videos = form.findField('videos').getValue();
+                                if(videos){
+                                    var videos_result = Ext.JSON.decode(videos);
+                                    if(videos_result){
+                                        Ext.Array.forEach(videos_result,function(item,index){
+                                            videos_ids.push(item.id);
+                                        });
+                                        videos_ids.toString();
+                                    }
+                                }
                             break;
                         }
-                        if(treepicker){
-                            var store = treepicker.getStore().getRootNode();
-                            var root_pid = store.data.id;
-                            var search_pid = treepicker.getValue();
-                            if(root_pid==search_pid){
-                                Ext.apply(this.proxy.extraParams, { pid: null});
-                                this.sort([{property:'id',direction:'ASC'},{property:'sort',direction:'ASC'}]);
-                            }else if(search_pid<0){
-                                Ext.apply(this.proxy.extraParams, { pid: 0});
-                                this.sort([{property:'id',direction:'ASC'},{property:'sort',direction:'ASC'}]);
-                            }else{
-                                Ext.apply(this.proxy.extraParams, { pid: search_pid});
-                                this.sort([{property:'sort',direction:'ASC'},{property:'id',direction:'ASC'}]);
-                            }
+
+                        var pid = [];
+                        if(tab.relationPid){
+                            pid = tab.relationPid;
                         }
-                        if(combobox){
-                            Ext.apply(this.proxy.extraParams, { type: combobox.getValue()});
-                        }
+
+                        Ext.apply(t.proxy.extraParams, { type:type, pid: pid, informations_ids:informations_ids, videos_ids:videos_ids});
+
+                        // if(tab.relationPid){
+                        //     Ext.apply(t.proxy.extraParams, { pid: tab.relationPid,type:type, informations_ids:informations_ids, videos_ids:videos_ids});
+                        // }else{
+                        //     Ext.apply(t.proxy.extraParams, {type:type,informations_ids:informations_ids,videos_ids:videos_ids});
+                        // }
+                        // if(treepicker){
+                        //     var store = treepicker.getStore().getRootNode();
+                        //     var root_pid = store.data.id;
+                        //     var search_pid = treepicker.getValue();
+                        //     if(root_pid==search_pid){
+                        //         Ext.apply(this.proxy.extraParams, { pid: null,type:type});
+                        //         this.sort([{property:'id',direction:'ASC'},{property:'sort',direction:'ASC'}]);
+                        //     }else if(search_pid<0){
+                        //         Ext.apply(this.proxy.extraParams, { pid: 0,type:type});
+                        //         this.sort([{property:'id',direction:'ASC'},{property:'sort',direction:'ASC'}]);
+                        //     }else{
+                        //         Ext.apply(this.proxy.extraParams, { pid: search_pid,type:type});
+                        //         this.sort([{property:'sort',direction:'ASC'},{property:'id',direction:'ASC'}]);
+                        //     }
+                        // }
                     }
-                    // var search_treepicker = tab.queryById('search_treepicker');
-                    // var search_combobox = tab.queryById('search_combobox');
-                    // if(search_treepicker){
-                    //     var store = search_treepicker.getStore().getRootNode();
-                    //     var root_pid = store.data.id;
-                    //     var search_pid = search_treepicker.getValue();
-                    //     if(root_pid==search_pid){
-                    //         Ext.apply(this.proxy.extraParams, { pid: null});
-                    //         this.sort([{property:'id',direction:'ASC'},{property:'sort',direction:'ASC'}]);
-                    //         tab.child('gridpanel').down('[dataIndex=sort]').setVisible(false);
-                    //     }else if(search_pid<0){
-                    //         Ext.apply(this.proxy.extraParams, { pid: 0});
-                    //         this.sort([{property:'id',direction:'ASC'},{property:'sort',direction:'ASC'}]);
-                    //         tab.child('gridpanel').down('[dataIndex=sort]').setVisible(false);
-                    //     }else{
-                    //         Ext.apply(this.proxy.extraParams, { pid: search_pid});
-                    //         this.sort([{property:'sort',direction:'ASC'},{property:'id',direction:'ASC'}]);
-                    //         tab.child('gridpanel').down('[dataIndex=sort]').setVisible(true);
-                    //     }
-                    // }
-                    // if(search_combobox){
-                    //     Ext.apply(this.proxy.extraParams, { type: search_combobox.getValue()});
-                    // }
                 }
             }
         }, cfg)]);
