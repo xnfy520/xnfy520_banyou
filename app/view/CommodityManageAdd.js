@@ -337,8 +337,10 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                     method:'POST',
                                     params:{pid:me.data.id},
                                     callback:function(records, operation, success){
-                                        var response = Ext.JSON.decode(success.responseText);
-                                        render_params.setValue(Ext.JSON.encode(response.data));
+                                        if(success.responseText){
+                                            var response = Ext.JSON.decode(success.responseText);
+                                            render_params.setValue(Ext.JSON.encode(response.data));
+                                        }
                                     }
                                 });
                             }
@@ -480,7 +482,7 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                 var form = me.child('form').getForm();
                                 var render_params = form.findField('render_params');
                                 var root = self.getRootNode();
-                                if(render_params){
+                                if(render_params && render_params.getValue()){
                                     root.appendChild(Ext.JSON.decode(render_params.getValue()));
                                 }
                                 var params = form.findField('params');
@@ -532,7 +534,7 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                     },{
                         title: '相关资讯',
                         xtype: 'panel',
-                        itemId:'aboutInformation',
+                        itemId:'aboutInformations',
                         layout: 'border',
                         bodyStyle:'background:white;',
                         margin:'-5px',
@@ -541,13 +543,13 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                 var stores = Ext.create('Xnfy.store.CommodityArticle');
                                 var store = stores.load({scope:this,callback:function(records,operation,success){
                                 }});
-                                self.queryById('aboutInformationType').reconfigure(store);
+                                self.queryById('aboutInformationsType').reconfigure(store);
                                 self.queryById('pagingtoolbarType').bindStore(store);
                             }
                         },
                         items: [{
                             xtype: 'gridpanel',
-                            itemId:'aboutInformationType',
+                            itemId:'aboutInformationsType',
                             flex: 1,
                             region: 'west',
                             title: '资讯列表',
@@ -561,12 +563,8 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                 },
                                 listeners: {
                                     drop: function(node, data, dropRec, dropPosition) {
-                                        console.log(data);
                                     },
                                     itemremove:function(record, index){
-                                        // console.log(record);
-                                        // console.log(index);
-                                        // console.log(this.getStore().reload());
                                     }
                                 }
                             },
@@ -600,29 +598,75 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                 itemId:'pagingtoolbarType',
                                 dock: 'bottom',
                                 displayInfo: false,
-                                displayMsg:'<span style="margin-left:-40px">{1} / {2}</span>'
+                                displayMsg:'<span style="margin-left:-55px">{2}条数据</span>'
                             }]
                         },{
                             xtype: 'gridpanel',
-                            itemId:'aboutInformationAdd',
+                            itemId:'aboutInformationsAdd',
                             region: 'center',
                             flex: 1,
                             title: '添加资讯',
                             header:false,
                             multiSelect: true,
+                            listeners:{
+                                'itemcontextmenu' : function(menutree, selected, items, index, e) {
+                                    var nodemenu = new Ext.menu.Menu({});
+                                    e.preventDefault();
+                                    e.stopEvent();
+                                    nodemenu = new Ext.menu.Menu({
+                                        floating : true,
+                                        items : [{
+                                            text : "移除所选项",
+                                            handler : function(self) {
+                                                var result = menutree.getSelectionModel().getSelection();
+                                                if(result.length>0){
+                                                    menutree.getStore().remove(result);
+                                                }
+                                                var informations_result = [];
+                                                menutree.getStore().each(function(item){
+                                                    informations_result.push(item.raw);
+                                                });
+                                                var form = me.child('form').getForm();
+                                                var informations = form.findField('informations');
+                                                var informations_count = form.findField('informations_count');
+                                                informations_count.setValue(menutree.getStore().count());
+                                                if(informations_result.length>0){
+                                                    informations.setValue(Ext.JSON.encode(informations_result));
+                                                }else{
+                                                    informations.setValue('');
+                                                }
+                                                me.queryById('aboutInformationsType').getStore().load();
+                                            }
+                                        }]
+                                    });
+                                    nodemenu.showAt(e.getXY());
+                                }
+                            },
                             viewConfig: {
                                 plugins: {
                                     ptype: 'gridviewdragdrop'
                                 },
                                 listeners: {
-                                    drop: function(node, data, dropRec, dropPosition) {
+                                    beforedrop: function(node, data, dropRec, dropPosition) {
+                                    },
+                                    itemupdate: function( record, index, node, eOpts ){
+                                    },
+                                    drop: function(){
                                         var informations_result = [];
                                         this.getStore().each(function(item){
                                             informations_result.push(item.raw);
                                         });
                                         var form = me.child('form').getForm();
                                         var informations = form.findField('informations');
-                                        informations.setValue(Ext.JSON.encode(informations_result));
+                                        var informations_count = form.findField('informations_count');
+                                        informations_count.setValue(this.getStore().count());
+                                        if(informations_result.length>0){
+                                            informations.setValue(Ext.JSON.encode(informations_result));
+                                        }
+                                        var aboutInformationsTypeStore = me.queryById('aboutInformationsType').getStore();
+                                        if(aboutInformationsTypeStore.count()<=0){
+                                            aboutInformationsTypeStore.load();
+                                        }
                                     }
                                 }
                             },
@@ -651,18 +695,29 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                     fieldLabel: '添加资讯',
                                     labelWidth:60,
                                     labelStyle:'font-weight:bold'
+                                },'->',{
+                                    xtype: 'displayfield',
+                                    name:'informations_count',
+                                    value: 0,
+                                    renderer:function(value){
+                                        if(value){
+                                            return '<i>共 '+value+' 项</i>';
+                                        }
+                                    }
                                 }]
-                            },{
-                                    xtype: 'pagingtoolbar',
-                                    dock: 'bottom',
-                                    displayInfo: false,
-                                    displayMsg:'{1} of {2}'
-                            }]
+                            }
+                            // ,{
+                            //         xtype: 'pagingtoolbar',
+                            //         dock: 'bottom',
+                            //         displayInfo: false,
+                            //         displayMsg:'{1} of {2}'
+                            // }
+                            ]
                         }]
                     },{
                         title: '相关视频',
                         xtype: 'panel',
-                        itemId:'aboutVideo',
+                        itemId:'aboutVideos',
                         layout: 'border',
                         bodyStyle:'background:white;',
                         margin:'-5px',
@@ -671,13 +726,13 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                 var stores = Ext.create('Xnfy.store.CommodityArticle');
                                 var store = stores.load({scope:this,callback:function(records,operation,success){
                                 }});
-                                self.queryById('aboutVideoType').reconfigure(store);
+                                self.queryById('aboutVideosType').reconfigure(store);
                                 self.queryById('pagingtoolbarType').bindStore(store);
                             }
                         },
                         items: [{
                             xtype: 'gridpanel',
-                            itemId:'aboutVideoType',
+                            itemId:'aboutVideosType',
                             flex: 1,
                             region: 'west',
                             title: '资讯列表',
@@ -724,29 +779,71 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                 itemId:'pagingtoolbarType',
                                 dock: 'bottom',
                                 displayInfo: false,
-                                displayMsg:'<span style="margin-left:-40px">{1} / {2}</span>'
+                                displayMsg:'<span style="margin-left:-55px">{2}条数据</span>'
                             }]
                         },{
                             xtype: 'gridpanel',
                             region: 'center',
-                            itemId:'aboutVideoAdd',
+                            itemId:'aboutVideosAdd',
                             flex: 1,
                             title: '添加资讯',
                             header:false,
                             multiSelect: true,
+                            listeners:{
+                                'itemcontextmenu' : function(menutree, selected, items, index, e) {
+                                    var nodemenu = new Ext.menu.Menu({});
+                                    e.preventDefault();
+                                    e.stopEvent();
+                                    nodemenu = new Ext.menu.Menu({
+                                        floating : true,
+                                        items : [{
+                                            text : "移除所选项",
+                                            handler : function(self) {
+                                                var result = menutree.getSelectionModel().getSelection();
+                                                if(result.length>0){
+                                                    menutree.getStore().remove(result);
+                                                }
+                                                var videos_result = [];
+                                                menutree.getStore().each(function(item){
+                                                    videos_result.push(item.raw);
+                                                });
+                                                var form = me.child('form').getForm();
+                                                var videos = form.findField('videos');
+                                                var videos_count = form.findField('videos_count');
+                                                videos_count.setValue(menutree.getStore().count());
+                                                if(videos_result.length>0){
+                                                    videos.setValue(Ext.JSON.encode(videos_result));
+                                                }else{
+                                                    videos.setValue('');
+                                                }
+                                                me.queryById('aboutVideosType').getStore().load();
+                                            }
+                                        }]
+                                    });
+                                    nodemenu.showAt(e.getXY());
+                                }
+                            },
                             viewConfig: {
                                 plugins: {
                                     ptype: 'gridviewdragdrop'
                                 },
                                 listeners: {
                                     drop: function(node, data, dropRec, dropPosition) {
-                                       var videos_result = [];
+                                        var videos_result = [];
                                         this.getStore().each(function(item){
                                             videos_result.push(item.raw);
                                         });
                                         var form = me.child('form').getForm();
                                         var videos = form.findField('videos');
-                                        videos.setValue(Ext.JSON.encode(videos_result));
+                                        var videos_count = form.findField('videos_count');
+                                        videos_count.setValue(this.getStore().count());
+                                        if(videos_result.length>0){
+                                            videos.setValue(Ext.JSON.encode(videos_result));
+                                        }
+                                        var aboutVideosTypeStore = me.queryById('aboutVideosType').getStore();
+                                        if(aboutVideosTypeStore.count()<=0){
+                                            aboutVideosTypeStore.load();
+                                        }
                                     }
                                 }
                             },
@@ -775,13 +872,24 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                     fieldLabel: '添加资讯',
                                     labelWidth:60,
                                     labelStyle:'font-weight:bold'
+                                },'->',{
+                                    xtype: 'displayfield',
+                                    name:'videos_count',
+                                    value: 0,
+                                    renderer:function(value){
+                                        if(value){
+                                            return '<i>共 '+value+' 项</i>';
+                                        }
+                                    }
                                 }]
-                            },{
-                                xtype: 'pagingtoolbar',
-                                dock: 'bottom',
-                                displayInfo: false,
-                                displayMsg:'{1} of {2}'
-                            }]
+                            }
+                            // ,{
+                            //     xtype: 'pagingtoolbar',
+                            //     dock: 'bottom',
+                            //     displayInfo: false,
+                            //     displayMsg:'{1} of {2}'
+                            // }
+                            ]
                         }]
                     }]
                 }],
@@ -994,19 +1102,35 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                                     }
 
                                                     if(response.data.informations){
+                                                        var informations_ids = [];
                                                         var informations_value = Ext.JSON.decode(response.data.informations);
-                                                        var informations_store = me.queryById('aboutInformationAdd').getStore();
+                                                        var informations_store = me.queryById('aboutInformationsAdd').getStore();
                                                         informations_store.removeAll();
                                                         informations_store.add(informations_value);
-                                                        me.queryById('aboutInformationType').getStore().reload();
+                                                        var informations_count = form.findField('informations_count');
+                                                        informations_count.setValue(informations_value.length);
+
+                                                        Ext.Array.forEach(informations_value,function(item,index){
+                                                            informations_ids.push(item.id);
+                                                        });
+                                                        informations_ids = informations_ids.toString();
+                                                        me.queryById('aboutInformationsType').getStore().reload({params:{type:1,informations_ids:informations_ids,videos_ids:{}}});
                                                     }
 
                                                     if(response.data.videos){
+                                                        var videos_ids = [];
                                                         var videos_value = Ext.JSON.decode(response.data.videos);
-                                                        var videos_store = me.queryById('aboutVideoAdd').getStore();
+                                                        var videos_store = me.queryById('aboutVideosAdd').getStore();
                                                         videos_store.removeAll();
                                                         videos_store.add(videos_value);
-                                                        me.queryById('aboutVideoType').getStore().reload();
+                                                        var videos_count = form.findField('videos_count');
+                                                        videos_count.setValue(videos_value.length);
+
+                                                        Ext.Array.forEach(videos_value,function(item,index){
+                                                            videos_ids.push(item.id);
+                                                        });
+                                                        videos_ids = videos_ids.toString();
+                                                        me.queryById('aboutVideosType').getStore().reload({params:{type:2,videos_ids:videos_ids,informations_ids:{}}});
                                                     }
 
                                                     Ext.create('Xnfy.util.common').uxNotification(true,'获取数据成功');
@@ -1048,11 +1172,14 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                             commodityParamsRoot.removeAll();
                             commodityParamsRoot.appendChild(Ext.JSON.decode(values.render_params));
 
-                            var informations_store = me.queryById('aboutInformationAdd').getStore();
+                            var informations_store = me.queryById('aboutInformationsAdd').getStore();
                             informations_store.removeAll();
 
-                            var videos_store = me.queryById('aboutVideoAdd').getStore();
+                            var videos_store = me.queryById('aboutVideosAdd').getStore();
                             videos_store.removeAll();
+
+                            me.queryById('aboutInformationsType').getStore().reload({params:{type:1}});
+                            me.queryById('aboutVideosType').getStore().reload({params:{type:2}});
                         }
                     },{
                         text: '确认添加',

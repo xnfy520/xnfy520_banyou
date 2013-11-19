@@ -16,7 +16,7 @@ Ext.define('Xnfy.store.CommodityArticle', {
                 type: 'ajax',
                 actionMethods: {create: 'POST', read: 'GET', update: 'POST', destroy: 'POST'},
                 api:{
-                    read: 'admin/article/byFilter',
+                    read: 'admin/article',
                     create : 'admin/articlemanage/insert',
                     update: 'admin/articlemanage/update',
                     destroy: 'admin/articlemanage/delete'
@@ -50,7 +50,7 @@ Ext.define('Xnfy.store.CommodityArticle', {
                     var videos_ids = [];
                     if(ctab){
                         switch(ctab.itemId){
-                            case 'aboutInformation':
+                            case 'aboutInformations':
                                 type = 1;
                                 var informations = form.findField('informations').getValue();
                                 if(informations){
@@ -58,12 +58,14 @@ Ext.define('Xnfy.store.CommodityArticle', {
                                     if(informations_result){
                                         Ext.Array.forEach(informations_result,function(item,index){
                                             informations_ids.push(item.id);
-                                        });
-                                        informations_ids.toString();
+                                        });                                        
                                     }
                                 }
+                                if(informations_ids.length>0){
+                                    informations_ids = informations_ids.toString();
+                                }
                             break;
-                            case 'aboutVideo':
+                            case 'aboutVideos':
                                 type = 2;
                                 var videos = form.findField('videos').getValue();
                                 if(videos){
@@ -72,39 +74,19 @@ Ext.define('Xnfy.store.CommodityArticle', {
                                         Ext.Array.forEach(videos_result,function(item,index){
                                             videos_ids.push(item.id);
                                         });
-                                        videos_ids.toString();
                                     }
+                                }
+                                if(videos_ids.length>0){
+                                    videos_ids = videos_ids.toString();
                                 }
                             break;
                         }
 
-                        var pid = [];
                         if(tab.relationPid){
                             pid = tab.relationPid;
                         }
 
                         Ext.apply(t.proxy.extraParams, { type:type, pid: pid, informations_ids:informations_ids, videos_ids:videos_ids});
-
-                        // if(tab.relationPid){
-                        //     Ext.apply(t.proxy.extraParams, { pid: tab.relationPid,type:type, informations_ids:informations_ids, videos_ids:videos_ids});
-                        // }else{
-                        //     Ext.apply(t.proxy.extraParams, {type:type,informations_ids:informations_ids,videos_ids:videos_ids});
-                        // }
-                        // if(treepicker){
-                        //     var store = treepicker.getStore().getRootNode();
-                        //     var root_pid = store.data.id;
-                        //     var search_pid = treepicker.getValue();
-                        //     if(root_pid==search_pid){
-                        //         Ext.apply(this.proxy.extraParams, { pid: null,type:type});
-                        //         this.sort([{property:'id',direction:'ASC'},{property:'sort',direction:'ASC'}]);
-                        //     }else if(search_pid<0){
-                        //         Ext.apply(this.proxy.extraParams, { pid: 0,type:type});
-                        //         this.sort([{property:'id',direction:'ASC'},{property:'sort',direction:'ASC'}]);
-                        //     }else{
-                        //         Ext.apply(this.proxy.extraParams, { pid: search_pid,type:type});
-                        //         this.sort([{property:'sort',direction:'ASC'},{property:'id',direction:'ASC'}]);
-                        //     }
-                        // }
                     }
                 }
             }

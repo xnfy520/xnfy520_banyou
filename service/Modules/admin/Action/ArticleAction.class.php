@@ -13,26 +13,22 @@ class ArticleAction extends CommonAction {
 		}
 
 		if(isset($_GET['query']) && !empty($_GET['query'])){
-			$search['_string'] = 'title like "%'.$_GET['query'].'%" OR indexing like "%'.$_GET['query'].'%"';
+			$search['_string'] = 'id like "%'.$_GET['query'].'%" OR title like "%'.$_GET['query'].'%" OR indexing like "%'.$_GET['query'].'%"';
 		}
 
 		if(isset($_GET['type']) && !empty($_GET['type'])){
 			$search['type'] = $_GET['type'];
 		}
 
+		if(isset($_GET['informations_ids']) && !empty($_GET['informations_ids'])){
+			$search['id']  = array('not in',$_GET['informations_ids']);
+		}else if(isset($_GET['videos_ids']) && !empty($_GET['videos_ids'])){
+			$search['id']  = array('not in',$_GET['videos_ids']);
+		}
+
 		$counts = $MODULE_NAME->where($search)->count();
 
 		$page = new page($counts,$_GET['limit'],$_GET['page'] ? $_GET['page'] : 0);
-
-		// $sort = 'id DESC';
-
-		// if(isset($_GET['sort']) && !empty($_GET['sort'])){
-		// 	if(!empty($_GET['property']) && !empty($_GET['direction'])){
-		// 		$sort = $_GET['propery'].' '.$_GET['direction'];
-		// 	}else if(!empty($_GET['property'])){
-		// 		$sort = $_GET['propery'];
-		// 	}
-		// }
 
 		$sort = 'id DESC';
 		if(isset($_GET['sort'])){
@@ -46,8 +42,7 @@ class ArticleAction extends CommonAction {
 			$sort = implode(',', $min_sort);
 		}
 
-
-		$list = $MODULE_NAME->where($search)->limit($page->limit)->order($sort)->select();
+		$list = $MODULE_NAME->field('details',true)->where($search)->limit($page->limit)->order($sort)->select();
 		echo json_encode(array(
 						"success"=>true,
 						"data"=>$list,
@@ -76,9 +71,7 @@ class ArticleAction extends CommonAction {
 
 		if(isset($_GET['informations_ids']) && !empty($_GET['informations_ids'])){
 			$search['id']  = array('not in',$_GET['informations_ids']);
-		}
-
-		if(isset($_GET['videos_ids']) && !empty($_GET['videos_ids'])){
+		}else if(isset($_GET['videos_ids']) && !empty($_GET['videos_ids'])){
 			$search['id']  = array('not in',$_GET['videos_ids']);
 		}
 
