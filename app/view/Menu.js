@@ -44,8 +44,8 @@ Ext.define('Xnfy.view.Menu', {
                     displayField: 'title',
                     store: 'ClassifyMenu',
                     listeners:{
-                        itemexpand:function(self){
-                            self.eachChild(function(i){
+                        load:function(self,node){
+                            node.eachChild(function(i){
                                 i.updateInfo(true,{title:i.data.title+(i.data.alias ? '（'+i.data.alias+'）' : '')});
                             });
                         }

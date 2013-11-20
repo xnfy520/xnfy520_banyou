@@ -58,7 +58,7 @@ Ext.define('Xnfy.store.CommodityArticle', {
                                     if(informations_result){
                                         Ext.Array.forEach(informations_result,function(item,index){
                                             informations_ids.push(item.id);
-                                        });                                        
+                                        });
                                     }
                                 }
                                 if(informations_ids.length>0){
@@ -82,6 +82,7 @@ Ext.define('Xnfy.store.CommodityArticle', {
                             break;
                         }
 
+                        pid = [];
                         if(tab.relationPid){
                             pid = tab.relationPid;
                         }

@@ -19,6 +19,7 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                 layout:'border',
                 listeners:{
                     render:function(){
+                        console.log(me.data);
                         if(me.data.parent){
                                 Ext.Ajax.request({
                                     url:"admin/article/getRelation",
@@ -153,28 +154,42 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                             var responses = Ext.decode(response.responseText);
                                             if(responses.success && responses.data){
                                                 Ext.Array.forEach(responses.data,function(item,index,all){
-                                                    if(item.indexing && item.childs){
+                                                    if(item.childs){
                                                         Ext.Array.forEach(item.childs,function(it,ind,al){
                                                             if(it.alias){
                                                                 item.childs[ind].title = (it.alias ? it.title+'（'+it.alias+'）' : '');
                                                             }
                                                         });
                                                         item.childs.unshift({title:'请选择'+item.title,id:0});
-                                                        var multi = ['orientation','gsm'];
+                                                        // var multi = ['orientation','gsm'];
                                                         var mul = false;
                                                         var val = 0;
-                                                        Ext.Array.forEach(multi,function(itm,index,all){
-                                                            if(itm==item.indexing){
-                                                                mul = true;
-                                                                val = '';
-                                                                item.childs.shift();
+                                                        var name = 'filter'+item.id;
+                                                        if(item.indexing=='brand'){
+                                                            name = 'brand';
+                                                        }
+                                                        // Ext.Array.forEach(multi,function(itm,index,all){
+                                                        //     // if(itm==item.indexing){
+                                                        //     //     mul = true;
+                                                        //     //     val = '';
+                                                        //     //     item.childs.shift();
+                                                        //     // }
+                                                        if(item.configuration){
+                                                            var mergerC = item.configuration.split('|');
+                                                            if(mergerC.length>0){
+                                                                if(_.contains(mergerC, 'multi')){
+                                                                    mul = true;
+                                                                    val = '';
+                                                                    item.childs.shift();
+                                                                }
                                                             }
-                                                        });
+                                                        }
+                                                        // });
                                                         var combo = Ext.create('Ext.form.ComboBox', {
                                                             fieldLabel:item.title,
                                                             anchor:'100%',
                                                             editable : false,
-                                                            name:item.indexing,
+                                                            name:name,
                                                             multiSelect:mul,
                                                             // allowBlank: false,
                                                             value:val,

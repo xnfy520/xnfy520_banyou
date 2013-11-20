@@ -75,11 +75,23 @@ class ClassifyAction extends CommonAction {
 				$where['pid'] = $pid;
 			}
 			$list = $MODULE_NAME->where($where)->order($sort)->select();
+			$dep = array('cellphone','computer','camera');
+			$deproot = 'accessorie_division';
 			if(isset($_GET['sub'])){
 				for($i=0;$i<count($list);$i++){
 					$subsearch['enabled'] = 1;
 					$subsearch['pid'] = $list[$i]['id'];
 					$list[$i]['children'] = $MODULE_NAME->where($subsearch)->order($sort)->select();
+					if($list[$i]['indexing']==$deproot && count($list[$i]['children'])>0){
+						for($d=0;$d<count($list[$i]['children']);$d++){
+							$depsearch['enabled'] = 1;
+							$depsearch['pid'] = $list[$i]['children'][$d]['id'];
+							$list[$i]['children'][$d]['children'] = $MODULE_NAME->where($depsearch)->order($sort)->select();
+						}
+					}
+					// if(in_array($list[$i]['indexing'],$dep)){
+					// 	echo $list[$i]['indexing'];
+					// }
 				}
 			}
 			echo json_encode(array(

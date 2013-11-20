@@ -15,6 +15,8 @@ Ext.define('Xnfy.controller.ClassifyMenu', {
                 selectionchange:function(t, selecteds){
                 },
                 cellclick:function(self, td, cellIndex, selected,eOpts){
+                },
+                itemclick:function( self, selected, item, index, e, eOpts ){
                     if(selected && !selected.data.leaf){
                         var center = Ext.getCmp("center");
                         var panel = Ext.getCmp(selected.id);
@@ -43,6 +45,9 @@ Ext.define('Xnfy.controller.ClassifyMenu', {
                             i.expand();
                         }
                     });
+                },
+                containerclick:function( self, e, eOpts ){
+                    console.log(self);
                 }
             },
             'xnfymenu [itemId=Configuration]':{
@@ -130,6 +135,8 @@ Ext.define('Xnfy.controller.ClassifyMenu', {
                         if(selected.raw.flag && selected.raw.flag=='CommodityManage'){
                             panel =Ext.create('Xnfy.view.CommodityManage');
                             panel.setTitle('管理 '+selected.data.text+'商品');
+                            console.log(selected.internalId);
+                            console.log(selected);
                             this.openCommodityManage(panel,selected.internalId,selected);
                         }else{
                             if(selected.data.id=='brandAllocation'){
@@ -150,9 +157,24 @@ Ext.define('Xnfy.controller.ClassifyMenu', {
                                         var record = [];
                                         Ext.Array.forEach(records,function(item,index,all){
                                             var record_ = [];
-                                            Ext.Array.forEach(item.data.children,function(items,indexs,alls){
-                                                record_.push({id:items.id,text:items.title,leaf:true,indexing:items.indexing,flag:'CommodityManage',parent:item.raw});
+                                            Ext.Array.forEach(item.childNodes,function(items,indexs,alls){
+                                                // console.log(items);
+                                                if(items.childNodes && items.childNodes.length>0){
+                                                    // console.log(items.data);
+                                                    var record__ = [];
+                                                    Ext.Array.forEach(items.childNodes,function(itemss,indexss,allss){
+                                                        console.log(itemss);
+                                                        record__.push({id:itemss.data.id,text:itemss.data.title,leaf:true,indexing:itemss.data.indexing,flag:'CommodityManage',parent:item.raw});
+                                                    });
+                                                    // console.log('--------');
+                                                    // console.log(record__);
+                                                    record_.push({id:items.data.id,text:items.data.title,leaf:false,indexing:items.data.indexing,parent:items.raw,children:record__});
+                                                }else{
+                                                    console.log(items);
+                                                    record_.push({id:items.data.id,text:items.data.title,leaf:true,indexing:items.data.indexing,flag:'CommodityManage',parent:item.raw});
+                                                }
                                             });
+                                            // console.log(record_);
                                             if(item.raw.indexing!='brands'){
                                                 record.push({id:'CommodityClassify-'+item.data.id,text:item.data.title,indexing:item.data.indexing,leaf:false,children:record_});
                                             }
@@ -399,6 +421,8 @@ Ext.define('Xnfy.controller.ClassifyMenu', {
         } else if(typeof panel!="string"){
             panel.id = n;
             panel.data = obj.raw;
+            console.log(panel.id);
+            console.log(panel.data);
             var gridpanel = panel.child('gridpanel');
             var pagingtoolbar = gridpanel.getDockedItems('pagingtoolbar')[0];
             var stores = Ext.create('Xnfy.store.CommodityList');

@@ -369,6 +369,36 @@ Ext.define('Xnfy.view.ClassifyList', {
                                 }
                               }
                             }
+                        },{
+                            xtype: 'combobox',
+                            name:"leaf",
+                            //allowBlank: false,
+                            fieldLabel:'叶　　子',
+                            emptyText : '请选择',
+                            mode : 'local',// 数据模式，local代表本地数据
+                            //readOnly : false,// 是否只读
+                            editable : false,// 是否允许输入
+                            //forceSelection : true,// 必须选择一个选项
+                            //blankText : '请选择',// 该项如果没有选择，则提示错误信息,
+                            store:Ext.create('Ext.data.Store', {
+                                fields: ['text', 'enabled'],
+                                data : [
+                                    {"text":"是", "enabled":1},
+                                    {"text":"否", "enabled":0}
+                                ]
+                            }),
+                            value:0,
+                            displayField:'text',
+                            valueField:'enabled',
+                            listeners: {
+                              change:function(combo,n,o){
+                                if(n==1){
+                                    combo.setValue(combo.store.getAt(0));
+                                }else{
+                                    combo.setValue(combo.store.getAt(1));
+                                }
+                              }
+                            }
                         }]
                     },{
                         xtype:'form',
@@ -406,36 +436,6 @@ Ext.define('Xnfy.view.ClassifyList', {
                             emptyText:'分类索引',
                             value:0
                         },{
-                            xtype: 'combobox',
-                            name:"leaf",
-                            //allowBlank: false,
-                            fieldLabel:'叶　　子',
-                            emptyText : '请选择',
-                            mode : 'local',// 数据模式，local代表本地数据
-                            //readOnly : false,// 是否只读
-                            editable : false,// 是否允许输入
-                            //forceSelection : true,// 必须选择一个选项
-                            //blankText : '请选择',// 该项如果没有选择，则提示错误信息,
-                            store:Ext.create('Ext.data.Store', {
-                                fields: ['text', 'enabled'],
-                                data : [
-                                    {"text":"是", "enabled":1},
-                                    {"text":"否", "enabled":0}
-                                ]
-                            }),
-                            value:0,
-                            displayField:'text',
-                            valueField:'enabled',
-                            listeners: {
-                              change:function(combo,n,o){
-                                if(n==1){
-                                    combo.setValue(combo.store.getAt(0));
-                                }else{
-                                    combo.setValue(combo.store.getAt(1));
-                                }
-                              }
-                            }
-                        },{
                             xtype:'numberfield',
                             name:'sort',
                             minValue: 0,
@@ -446,6 +446,15 @@ Ext.define('Xnfy.view.ClassifyList', {
                             xtype: 'textareafield',
                             name:'remark',
                             fieldLabel: '备　　注',
+                            height: 120,
+                            margin: '0',
+                            allowBlank: true,
+                            msgTarget:'under',
+                            maxLength:255
+                        },{
+                            xtype: 'textareafield',
+                            name:'configuration',
+                            fieldLabel: '额外配置',
                             height: 120,
                             margin: '0',
                             allowBlank: true,
