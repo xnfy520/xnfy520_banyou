@@ -40,7 +40,7 @@ Ext.define('Xnfy.view.Menu', {
                     xtype: 'treepanel',
                     title: '类别管理',
                     itemId:'ClassifyMenu',
-                    rootVisible: true,
+                    // rootVisible: false,
                     displayField: 'title',
                     store: 'ClassifyMenu',
                     listeners:{
@@ -76,12 +76,6 @@ Ext.define('Xnfy.view.Menu', {
                                 id:'ArticleManage',
                                 leaf: true,
                                 text:'文章管理'
-                                // expanded:true,
-                                // children:[{
-                                //     text:'文章推送',
-                                //     id:"PushManage",
-                                //     leaf: true
-                                // }]
                             },{
                                 id:'LinkManage',
                                 leaf: true,

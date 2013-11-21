@@ -22,11 +22,106 @@ Ext.define('Xnfy.controller.ClassifyMenu', {
                         var panel = Ext.getCmp(selected.id);
                         if(!panel){
                             panel =Ext.create('Xnfy.view.ClassifyList');
-                            var form = panel.child('form');
                             panel.setTitle(selected.data.title+' 分类');
+                            var form = panel.child('form');
+                            if(selected.raw.configuration){
+                                var mergerC = selected.raw.configuration.split('|');
+                                if(mergerC.length>0){
+                                    if(_.contains(mergerC, 'shop')){
+                                        panel.setTitle(selected.data.title+' 店铺');
+                                        panel.child('gridpanel').down('[dataIndex=title]').text='店铺名称';
+                                        panel.child('gridpanel').down('[dataIndex=indexing]').hidden = true;
+                                        panel.child('gridpanel').down('[dataIndex=number]').hidden = true;
+                                        var title = form.getForm().findField('title');
+                                        title.setFieldLabel('店铺名称');
+                                        title.emptyText = '店铺名称';
+                                        var shop = {
+                                            xtype:'form',
+                                            itemId:'shopInfos',
+                                            title:'店铺信息',
+                                            autoScroll:true,
+                                            bodyPadding:'5',
+                                            defaults: {
+                                                anchor: '100%',
+                                                labelAlign:'top',
+                                                labelStyle: 'font-weight:bold;margin-bottom:2px',
+                                                stripCharsRe:new RegExp(/(^\s*)/g)
+                                            },
+                                            defaultType: 'textfield',
+                                            items:[{
+                                                fieldLabel: '店铺地址',
+                                                emptyText:'店铺地址',
+                                                name: 'address',
+                                                allowBlank: false
+                                            },{
+                                                fieldLabel: '销售热线',
+                                                emptyText:'销售热线',
+                                                name: 'hotline',
+                                                allowBlank: false
+                                            },{
+                                                fieldLabel: '工作时间',
+                                                emptyText:'工作时间',
+                                                name: 'working_time',
+                                                allowBlank: false
+                                            },{
+                                                fieldLabel: '店铺详情',
+                                                emptyText:'选择店铺详情相关文章',
+                                                xtype:'combobox',
+                                                name: 'aid',
+                                                allowBlank: true,
+                                                editable : false,
+                                                value:0,
+                                                store:Ext.create('Ext.data.Store', {
+                                                    fields: ['title', 'id']
+                                                }),
+                                                displayField:'title',
+                                                valueField:'id',
+                                                listeners:{
+                                                    afterrender:function(self){
+                                                        Ext.Ajax.request({
+                                                        url:"admin/article/getShop",
+                                                        method:'post',
+                                                        callback:function(records, operation, success){
+                                                            var response = Ext.JSON.decode(success.responseText);
+                                                            if(response.success){
+                                                                if(response.data.length>0){
+                                                                    response.data.unshift({'title':'选择店铺详情相关文章','id':0});
+                                                                    var newstore = Ext.create('Ext.data.Store', {
+                                                                        fields: ['title', 'id'],
+                                                                        data : response.data
+                                                                    });
+                                                                    self.bindStore(newstore);
+                                                                    self.setValue(0);
+                                                                }
+                                                            }
+                                                        }
+                                                    });
+                                                    }
+                                                }
+                                            }]
+                                        };
+                                        form.insert(1,shop);
+                                        var itemCover = panel.queryById('itemCover');
+                                        itemCover.setTitle('店铺地址图片');
+                                        var combobox_image = form.getForm().findField('combobox_image');
+                                        combobox_image.setFieldLabel('选择店铺地址图片');
+                                        combobox_image.emptyText = '选择店铺地址图片';
+                                        var newstore = Ext.create('Ext.data.Store', {
+                                            fields: ['text', 'selected_image'],
+                                            data : [
+                                                {"text":"无图片", "selected_image":0},
+                                                {"text":"选择图片", "selected_image":1}
+                                            ]
+                                        });
+                                        combobox_image.bindStore(newstore);
+                                        combobox_image.setValue(0);
+                                    }
+                                }
+                            }
+
                             var pid = selected.internalId;
-                            //if(selected.internalId===0){
-                            form.setTitle('添加 分类');
+                            // if(selected.internalId===0){
+                                   form.setTitle('添加 分类');
                             // }else{
                             //     form.setTitle('添加 '+selected.data.title+' 子类');
                             // }
@@ -135,8 +230,6 @@ Ext.define('Xnfy.controller.ClassifyMenu', {
                         if(selected.raw.flag && selected.raw.flag=='CommodityManage'){
                             panel =Ext.create('Xnfy.view.CommodityManage');
                             panel.setTitle('管理 '+selected.data.text+'商品');
-                            console.log(selected.internalId);
-                            console.log(selected);
                             this.openCommodityManage(panel,selected.internalId,selected);
                         }else{
                             if(selected.data.id=='brandAllocation'){
@@ -163,14 +256,12 @@ Ext.define('Xnfy.controller.ClassifyMenu', {
                                                     // console.log(items.data);
                                                     var record__ = [];
                                                     Ext.Array.forEach(items.childNodes,function(itemss,indexss,allss){
-                                                        console.log(itemss);
                                                         record__.push({id:itemss.data.id,text:itemss.data.title,leaf:true,indexing:itemss.data.indexing,flag:'CommodityManage',parent:item.raw});
                                                     });
                                                     // console.log('--------');
                                                     // console.log(record__);
                                                     record_.push({id:items.data.id,text:items.data.title,leaf:false,indexing:items.data.indexing,parent:items.raw,children:record__});
                                                 }else{
-                                                    console.log(items);
                                                     record_.push({id:items.data.id,text:items.data.title,leaf:true,indexing:items.data.indexing,flag:'CommodityManage',parent:item.raw});
                                                 }
                                             });
@@ -421,8 +512,6 @@ Ext.define('Xnfy.controller.ClassifyMenu', {
         } else if(typeof panel!="string"){
             panel.id = n;
             panel.data = obj.raw;
-            console.log(panel.id);
-            console.log(panel.data);
             var gridpanel = panel.child('gridpanel');
             var pagingtoolbar = gridpanel.getDockedItems('pagingtoolbar')[0];
             var stores = Ext.create('Xnfy.store.CommodityList');

@@ -51,6 +51,48 @@ class ArticleAction extends CommonAction {
 		
 	}
 
+	function getShop(){
+
+		$Classify = M('Classify');
+		$classify_where['indexing'] = 'article';
+		$classify_where['pid'] = 0;
+		$classify_where['enabled'] = 1;
+		$article = $Classify->where($classify_where)->find();
+		$shop = null;
+		if($article){
+			$classify_where['indexing'] = 'help_center';
+			$classify_where['pid'] = $article['id'];
+			$help = $Classify->where($classify_where)->find();
+			if($help){
+				$classify_where['indexing'] = 'shop';
+				$classify_where['pid'] = $help['id'];
+				$shop = $Classify->where($classify_where)->find();
+			}
+		}
+
+		if($shop){
+			$MODULE_NAME = D(MODULE_NAME);
+
+			$sort = 'sort DESC,id DESC';
+
+			$search['enabled'] = 1;
+			$search['pid'] = $shop['id'];
+
+			$list = $MODULE_NAME->field('id,title')->where($search)->order($sort)->select();
+			echo json_encode(array(
+							"success"=>true,
+							"data"=>$list
+						));
+		}else{
+			echo json_encode(array(
+							"success"=>false,
+							"message"=>'无相关数据'
+						));
+		}
+
+		
+	}
+
 	function byFilter(){
 
 		import("@.ORG.Util.emit_ajax_page");

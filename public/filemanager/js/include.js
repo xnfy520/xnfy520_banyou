@@ -464,14 +464,21 @@ function apply_img(file,external){
     }else{
         var image_select_window = window_parent.Ext.getCmp('select-image-window');
         if(image_select_window){
-        	var center = window_parent.Ext.getCmp("center");
-            var panel = center.getActiveTab();
-            var filed = panel.queryById(image_select_window.custom_variables.filed_id);
-            filed.setValue(path+file);
-            var image = panel.queryById(image_select_window.custom_variables.image_id);
-	        image.setSrc(path+file);
-	        image.setVisible(true);
-	        image_select_window.close();
+        	if(image_select_window.custom_variables.type=='window'){
+        		var panel = window_parent.Ext.getCmp(image_select_window.custom_variables.itemId);
+        	}else{
+        		var center = window_parent.Ext.getCmp("center");
+	            var panel = center.getActiveTab();
+        	}
+        	if(panel){
+        		var filed = panel.queryById(image_select_window.custom_variables.filed_id);
+	            filed.setValue(path+file);
+	            var image = panel.queryById(image_select_window.custom_variables.image_id);
+		        image.setSrc(path+file);
+		        image.setVisible(true);
+		        image_select_window.close();
+        	}
+        	
         }else{
         	apply_any(path, file);
         }

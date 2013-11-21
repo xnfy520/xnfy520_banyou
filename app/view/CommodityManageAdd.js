@@ -19,7 +19,6 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                 layout:'border',
                 listeners:{
                     render:function(){
-                        console.log(me.data);
                         if(me.data.parent){
                                 Ext.Ajax.request({
                                     url:"admin/article/getRelation",

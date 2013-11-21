@@ -280,8 +280,20 @@ Ext.define('Xnfy.view.ClassifyList', {
                             form.getDockedItems('toolbar [itemId=addEdit]')[0].setText('确认修改');
                             if(r.length>0){
                                 var combobox_image = form.getForm().findField('combobox_image');
-
+                                form.getForm().reset();
                                 form.getForm().loadRecord(t.lastSelected);
+                                if(t.lastSelected.data.attach){
+                                    if(Ext.isString(t.lastSelected.data.attach)){
+                                        t.lastSelected.data.attach = Ext.JSON.decode(t.lastSelected.data.attach);
+                                    }
+                                    Ext.Object.each(t.lastSelected.data.attach,function(key,value){
+                                        var componenect = form.queryById(key);
+                                        if(componenect){
+                                            componenect.getForm().reset();
+                                            form.getForm().setValues(value);
+                                        }
+                                    });
+                                }
                                 form.setTitle('修改 分类');
                                 var image = form.queryById('cover');
 
@@ -311,7 +323,7 @@ Ext.define('Xnfy.view.ClassifyList', {
                     // split: true,
                     // collapsible: true,
                     layout:'accordion',
-                    title:'添加链接',
+                    title:'添加类别',
                     header:false,
                     flex: 0.34,
                     defaults:{
@@ -464,6 +476,7 @@ Ext.define('Xnfy.view.ClassifyList', {
                         },{
                         xtype:'form',
                         title:'封面图片',
+                        itemId:'itemCover',
                         autoScroll:true,
                         defaultType: 'textfield',
                         // bodyStyle:'overflow-x:hidden;overflow-y:inherit;',
@@ -597,7 +610,19 @@ Ext.define('Xnfy.view.ClassifyList', {
                                             button.up('form').setLoading(true);
                                             var store = panel.child('gridpanel').getStore();
                                             var datas = store.findRecord('id',values.id);
+                                            form.reset();
                                             form.loadRecord(datas);
+                                            if(datas.data.attach){
+                                                if(Ext.isString(datas.data.attach)){
+                                                    datas.data.attach = Ext.JSON.decode(datas.data.attach);
+                                                }
+                                                Ext.Object.each(datas.data.attach,function(key,value){
+                                                    var componenect = button.up('form').queryById(key);
+                                                    if(componenect){
+                                                        form.setValues(value);
+                                                    }
+                                                });
+                                            }
                                             if(datas.data.cover){
                                                 form.findField('combobox_image').setValue(1);
                                                 form.owner.queryById('cover').setSrc(datas.data.cover);
@@ -628,6 +653,12 @@ Ext.define('Xnfy.view.ClassifyList', {
                                             menud = menuc.getRootNode().findChild('id',pid,true); //获取当前pid节点
                                         }
                                         var sort = form.getForm().findField('sort');
+                                        var shopInfos = form.queryById('shopInfos');
+                                        var attach = [];
+                                        if(shopInfos){
+                                            attach = {shopInfos:shopInfos.getValues()};
+                                            attach = Ext.JSON.encode(attach);
+                                        }
                                         if(form.getForm().findField('id') && form.getForm().findField('id').value>0){
                                             var rcord = panel.child('gridpanel').getStore().findRecord('id',form.getForm().findField('id').value);
                                             if(rcord.data.number>0 && form.getForm().findField('leaf').value==1){
@@ -636,6 +667,7 @@ Ext.define('Xnfy.view.ClassifyList', {
                                             }
                                             form.getForm().submit({
                                                 waitMsg:'正在处理数据...',
+                                                params:{attach:attach},
                                                 method:'POST',
                                                 url:'admin/classify/update',
                                                 submitEmptyText:false,
@@ -667,7 +699,7 @@ Ext.define('Xnfy.view.ClassifyList', {
                                             });
                                         }else{
                                             form.getForm().submit({
-                                                    params:{pid:pid},
+                                                    params:{pid:pid,attach:attach},
                                                     waitMsg:'正在处理数据...',
                                                     method:'POST',
                                                     submitEmptyText:false,
@@ -700,211 +732,6 @@ Ext.define('Xnfy.view.ClassifyList', {
                                 }
                             ]
                         }]
-                    // items: [
-                    //     // {
-                    //     //     xtype:'hiddenfield',
-                    //     //     name:'id'
-                    //     // },
-                    //     {
-                    //         fieldLabel: '分类名称',
-                    //         labelAlign: 'top',
-                    //         allowBlank: false,
-                    //         emptyText:'分类名称',
-                    //         name:'title'
-                    //     },{
-                    //         fieldLabel: '分类别名',
-                    //         labelAlign: 'top',
-                    //         allowBlank: true,
-                    //         emptyText:'分类名称',
-                    //         name:'alias'
-                    //     },
-                    //     {
-                    //         fieldLabel: '分类索引',
-                    //         labelAlign: 'top',
-                    //         name:'indexing',
-                    //         allowBlank: true,
-                    //         emptyText:'分类索引',
-                    //         stripCharsRe:new RegExp(/[\W]/i)
-                    //     },{
-                    //         fieldLabel: '分类路径',
-                    //         xtype:'hiddenfield',
-                    //         labelAlign: 'top',
-                    //         name:'path',
-                    //         allowBlank: true,
-                    //         emptyText:'分类索引',
-                    //         value:0
-                    //     },{
-                    //         xtype: 'combobox',
-                    //         name:"leaf",
-                    //         //allowBlank: false,
-                    //         fieldLabel:'叶　　子',
-                    //         emptyText : '请选择',
-                    //         mode : 'local',// 数据模式，local代表本地数据
-                    //         //readOnly : false,// 是否只读
-                    //         editable : false,// 是否允许输入
-                    //         //forceSelection : true,// 必须选择一个选项
-                    //         //blankText : '请选择',// 该项如果没有选择，则提示错误信息,
-                    //         store:Ext.create('Ext.data.Store', {
-                    //             fields: ['text', 'enabled'],
-                    //             data : [
-                    //                 {"text":"是", "enabled":1},
-                    //                 {"text":"否", "enabled":0}
-                    //             ]
-                    //         }),
-                    //         value:0,
-                    //         displayField:'text',
-                    //         valueField:'enabled',
-                    //         listeners: {
-                    //           change:function(combo,n,o){
-                    //             if(n==1){
-                    //                 combo.setValue(combo.store.getAt(0));
-                    //             }else{
-                    //                 combo.setValue(combo.store.getAt(1));
-                    //             }
-                    //           }
-                    //         }
-                    //     },{
-                    //         xtype: 'combobox',
-                    //         name:"enabled",
-                    //         //allowBlank: false,
-                    //         fieldLabel:'启　　用',
-                    //         emptyText : '请选择',
-                    //         mode : 'local',// 数据模式，local代表本地数据
-                    //         //readOnly : false,// 是否只读
-                    //         editable : false,// 是否允许输入
-                    //         //forceSelection : true,// 必须选择一个选项
-                    //         //blankText : '请选择',// 该项如果没有选择，则提示错误信息,
-                    //         store:Ext.create('Ext.data.Store', {
-                    //             fields: ['text', 'enabled'],
-                    //             data : [
-                    //                 {"text":"是", "enabled":1},
-                    //                 {"text":"否", "enabled":0}
-                    //             ]
-                    //         }),
-                    //         value:1,
-                    //         displayField:'text',
-                    //         valueField:'enabled',
-                    //         listeners: {
-                    //           change:function(combo,n,o){
-                    //             if(n==1){
-                    //                 combo.setValue(combo.store.getAt(0));
-                    //             }else{
-                    //                 combo.setValue(combo.store.getAt(1));
-                    //             }
-                    //           }
-                    //         }
-                    //     },{
-                    //         xtype:'numberfield',
-                    //         name:'sort',
-                    //         minValue: 0,
-                    //         maxValue:255,
-                    //         fieldLabel:'排　　序',
-                    //         value:99
-                    //     },{
-                    //         xtype: 'textareafield',
-                    //         name:'remark',
-                    //         fieldLabel: '备　　注',
-                    //         height: 120,
-                    //         margin: '0',
-                    //         allowBlank: true,
-                    //         msgTarget:'under',
-                    //         maxLength:255
-                    //     }
-                    // ],
-                    // buttons: [{
-                    //     text: '重置',
-                    //     formBind: true,
-                    //     handler:function(button){
-                    //         var bt = button.ownerCt.ownerCt;
-                    //         if(bt.getForm().findField('id')){
-                    //             bt.getForm().load({url:'admin/classify/getData',params:{id:bt.getForm().findField('id').value}});
-                    //         }else{
-                    //             bt.getForm().reset();
-                    //         }
-                    //     }
-                    // },{xtype: 'tbfill'},
-                    // {
-                    //     text: '提交',
-                    //     formBind: true,
-                    //     handler:function(button){
-                    //         var panel = button.up('form').up('panel');
-                    //         var pid = panel.openid; //获取当前pid
-                    //         var form = button.up('form'); //获取表单组件
-                    //         var menuc = Ext.ComponentQuery.query('xnfymenu [itemId=ClassifyMenu]')[0]; //获取分类列表
-                    //         var menud = menuc.getRootNode();
-                    //         var center = Ext.getCmp("center");
-                    //         if(pid!==0){
-                    //             menud = menuc.getRootNode().findChild('id',pid,true); //获取当前pid节点
-                    //         }
-                    //         var sort = form.getForm().findField('sort');
-                    //         if(form.getForm().findField('id') && form.getForm().findField('id').value>0){
-                    //             var rcord = panel.child('gridpanel').getStore().findRecord('id',form.getForm().findField('id').value);
-                    //             if(rcord.data.number>0 && form.getForm().findField('leaf').value==1){
-                    //                 Ext.create('Xnfy.util.common').uxNotification(false,'此分类下还有子类,不能修改为叶子',3000);
-                    //                 return false;
-                    //             }
-                    //             form.getForm().submit({
-                    //                 waitMsg:'正在处理数据...',
-                    //                 method:'POST',
-                    //                 url:'admin/classify/update',
-                    //                 submitEmptyText:false,
-                    //                 success:function(f, response){
-                    //                     panel.child('gridpanel').getDockedItems('pagingtoolbar')[0].getStore().reload();
-                    //                     var tab = center.getComponent('Xnfy.model.ClassifyMenu-'+response.result.data.id);
-                    //                     if(menud.isExpanded() || menud.isLoaded()){
-                    //                         if(response.result.data.leaf==1){
-                    //                             response.result.data.leaf = true;
-                    //                             if(tab){
-                    //                                 tab.close();
-                    //                             }
-                    //                         }else{
-                    //                             response.result.data.leaf = false;
-                    //                             if(tab){
-                    //                                 tab.setTitle(response.result.data.title);
-                    //                             }
-                    //                         }
-                    //                         if(response.result.data.alias){
-                    //                             response.result.data.title = response.result.data.title+'（'+response.result.data.alias+'）';
-                    //                         }
-                    //                         menuc.getRootNode().findChild('id',response.result.data.id,true).updateInfo(true,response.result.data);
-                    //                     }
-                    //                     Ext.create('Xnfy.util.common').uxNotification(true,'修改数据成功',3000);
-                    //                 },
-                    //                 failure:function(f, response){
-                    //                     Ext.create('Xnfy.util.common').uxNotification(false,response.result.errors.msg,5000);
-                    //                 }
-                    //             });
-                    //         }else{
-                    //             form.getForm().submit({
-                    //                     params:{pid:pid},
-                    //                     waitMsg:'正在处理数据...',
-                    //                     method:'POST',
-                    //                     submitEmptyText:false,
-                    //                     url:'admin/classify/insert',
-                    //                     success:function(f, response){
-                    //                         if(menud.isExpanded() || menud.isLoaded()){
-                    //                             if(response.result.data.alias){
-                    //                                 response.result.data.title = response.result.data.title+'（'+response.result.data.alias+'）';
-                    //                             }
-                    //                             menud.appendChild(response.result.data);
-                    //                         }
-                    //                         var center = Ext.getCmp("center");
-                    //                         center.items.each(function(i){
-                    //                             if(i.class && i.class=='classify'){
-                    //                                 i.child('gridpanel').getStore().reload({params:{pid:i.openid}});
-                    //                                 i.child('gridpanel').getSelectionModel().deselectAll();
-                    //                             }
-                    //                         });
-                    //                         form.getForm().reset();
-                    //                         Ext.create('Xnfy.util.common').uxNotification(true,'添加数据成功',3000);
-                    //                     },
-                    //                     failure:function(f, response){
-                    //                         Ext.create('Xnfy.util.common').uxNotification(false,response.result.errors.msg,5000);
-                    //                     }
-                    //                 });
-                    //         }
-                    //     }
-                    // }]
                 }
             ]
         });
