@@ -264,4 +264,41 @@ class ClassifyAction extends CommonAction {
 		}
 	}
 
+
+	function getShop(){
+		$MODULE_NAME = D(MODULE_NAME);
+		$search['indexing'] = 'shop';
+		$search['pid'] = 0;
+		$data = $MODULE_NAME->where($search)->find();
+		if($data){
+			$result = $MODULE_NAME->field('id,title,alias,leaf,configuration')->where('pid='.$data['id'].' AND enabled=1')->order('sort,id')->select();
+			if($result){
+				foreach($result as $key=>$value){
+					$result[$key]['children'] = $MODULE_NAME->field('id,title,leaf,configuration')->where('pid='.$value['id'].' AND enabled=1')->order('sort,id')->select();
+					if($result[$key]['children']){
+						foreach($result[$key]['children'] as $keya=>$valuea){
+							$result[$key]['children'][$keya]['children'] = $MODULE_NAME->field('id,title,leaf,configuration')->where('pid='.$valuea['id'].' AND enabled=1')->order('sort,id')->select();
+							if($result[$key]['children'][$keya]['children']){
+								foreach($result[$key]['children'][$keya]['children'] as $keyb=>$valueb){
+									$result[$key]['children'][$keya]['children'][$keyb]['status'] = 1;
+									$result[$key]['children'][$keya]['children'][$keyb]['children'] = $MODULE_NAME->field('id,title,leaf,configuration')->where('pid='.$valueb['id'].' AND enabled=1')->order('sort,id')->select();
+									foreach($result[$key]['children'][$keya]['children'][$keyb]['children'] as $keyc=>$valuec){
+										$result[$key]['children'][$keya]['children'][$keyb]['children'][$keyc]['status'] = 1;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			
+			if($result){
+				echo json_encode(array(
+					"success"=>true,
+					"data"=>$result
+				));
+			}
+		}
+	}
+
 }

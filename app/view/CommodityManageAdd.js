@@ -345,6 +345,7 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                             var commodityParams =  this.queryById('commodityParams');
                             var form = this.child('form').getForm();
                             var render_params = form.findField('render_params');
+                            var render_shop = form.findField('render_shop');
                             if(me.data){
                                  Ext.Ajax.request({
                                     url:"admin/commodity/getParameter",
@@ -354,6 +355,17 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                         if(success.responseText){
                                             var response = Ext.JSON.decode(success.responseText);
                                             render_params.setValue(Ext.JSON.encode(response.data));
+                                        }
+                                    }
+                                });
+
+                                 Ext.Ajax.request({
+                                    url:"admin/classify/getShop",
+                                    method:'POST',
+                                    callback:function(records, operation, success){
+                                        if(success.responseText){
+                                            var response = Ext.JSON.decode(success.responseText);
+                                            render_shop.setValue(Ext.JSON.encode(response.data));
                                         }
                                     }
                                 });
@@ -396,6 +408,11 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                 name:'params',
                                 fieldLabel:'商品参数',
                                 hidden:true
+                            },{
+                                xtype:'textarea',
+                                name:'render_shop',
+                                fieldLabel:'店铺骨架',
+                                hidden:true
                             }],
                             listeners: {
                                 afterlayout:function(me){
@@ -413,19 +430,19 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                         items: []
                     },{
                         title:'详细参数',
-                        // layout: 'fit',
                         xtype:'treepanel',
                         itemId:'commodityParams',
                         rootVisible: false,
                         useArrows:true,
                         singleExpand: true,
-                        style:'border-top:1px solid #C0C0C0',
+                        style:'border-top:1px solid #C0C0C0;',
                         margin:'5 0 0 0',
                         columns: [{
                             xtype: 'treecolumn',
                             text: '参数名',
                             dataIndex: "title",
                             width:300,
+                            maxWidth:300,
                             // flex: 0.3,
                             sortable: false
                         },
@@ -433,7 +450,7 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                             text: "参数值",
                             dataIndex: "value",
                             // flex: 0.4,
-                            width:400,
+                            width:450,
                             sortable: false,
                             editor: 'textfield',
                             renderer:function(value,metaData,record,rowIndex,colIndex,store,view){
@@ -523,8 +540,160 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                         }
                     },{
                         title: '库存状态',
-                        layout: 'fit',
-                        items: []
+                         xtype:'treepanel',
+                        itemId:'commodityInventory',
+                        rootVisible: false,
+                        useArrows:true,
+                        // singleExpand: true,
+                        style:'border-top:1px solid #C0C0C0;',
+                        margin:'5 0 0 0',
+                        columns: [{
+                            xtype: 'treecolumn',
+                            text: '店铺',
+                            dataIndex: "title",
+                            width:300,
+                            maxWidth:300,
+                            // flex: 0.3,
+                            sortable: false,
+                            renderer:function(value,metaData,record,rowIndex,colIndex,store,view){
+                                var v = value;
+                                if(record.data.leaf==true){
+                                    if(record.parentNode.raw.configuration){
+                                        var list = record.parentNode.raw.configuration.split('|');
+                                        if(_.contains(list, 'shop')){
+                                            v = '<small style="color:blue">'+value+'</small>';
+                                        }else if(_.contains(list, 'delivery_point')){
+                                            v = '<small style="color:red">'+value+'</small>';
+                                        }
+                                    }
+                                }
+                                return v;
+                            }
+                        },
+                        {
+                            text: "状态",
+                            dataIndex: "status",
+                            // flex: 0.4,
+                            width:100,
+                            sortable: false,
+                            align:'left',
+                            editor: {
+                                xtype:'combobox',
+                                emptyText : '库存量',
+                                mode : 'local',// 数据模式，local代表本地数据
+                                editable : false,// 是否允许输入
+                                value:1,
+                                store:Ext.create('Ext.data.Store', {
+                                    fields: ['text', 'value'],
+                                    data : [
+                                        {"text":"现货", "value":1},
+                                        {"text":"缺货", "value":0}
+                                    ]
+                                }),
+                                displayField:'text',
+                                valueField:'value'
+                            },
+                            renderer:function(value,metaData,record,rowIndex,colIndex,store,view){
+                                var v = value;
+                                switch(v){
+                                    case 0:
+                                        v = '缺货';
+                                    break;
+                                    case 1:
+                                        v = '现货';
+                                    break;
+                                }
+                                if(record.data.leaf==true){
+                                    if(record.parentNode.raw.configuration){
+                                        var list = record.parentNode.raw.configuration.split('|');
+                                        if(_.contains(list, 'delivery_point')){
+                                            v = '';
+                                        }
+                                    }
+                                }
+                                /*
+                                    0 缺货
+                                    1 预定
+                                */
+                                return v;
+                            }
+                        },
+                        {
+                            text: "备注",
+                            dataIndex: "value",
+                            // flex: 0.4,
+                            width:350,
+                            sortable: false,
+                            editor: 'textfield',
+                            renderer:function(value,metaData,record,rowIndex,colIndex,store,view){
+                                var v = value;
+                                if(record.data.leaf==true){
+                                    v = Ext.util.Format.stripTags(value);
+                                    metaData.tdAttr = 'data-qtip="' + v + '"';
+                                }
+                                return v;
+                            }
+                        }],
+                        plugins: [
+                            Ext.create('Ext.grid.plugin.CellEditing', {
+                                pluginId:'inventorySave',
+                                clicksToEdit: 1,
+                                listeners: {
+                                    cancelEdit: function(editor, context) {
+                                    },
+                                    beforeedit:function(editor, context){
+                                        if(context.record.parentNode.raw.configuration){
+                                            var list = context.record.parentNode.raw.configuration.split('|');
+                                            if(context.record.data.leaf){
+                                                if(_.contains(list, 'shop')){
+                                                    return true;
+                                                }else if(_.contains(list, 'delivery_point')){
+                                                    return false;
+                                                }
+                                            }else{
+                                                return false;
+                                            }
+                                        }else if(context.record.raw.configuration){
+                                            var lists = context.record.raw.configuration.split('|');
+                                            if(_.contains(lists, 'shop') || _.contains(lists, 'delivery_point')){
+                                                return true;
+                                            }else{
+                                                return false;
+                                            }
+                                        }else{
+                                            return false;
+                                        }
+                                    },
+                                    edit:function(editor, context){
+                                        console.log(editor);
+                                        console.log(context);
+                                    }
+                                }
+                            })
+                        ],
+                        store:Ext.create("Ext.data.TreeStore", {
+                            fields: [
+                                "title", "status", "value"
+                            ],
+                            root: {
+                                title: 'root',
+                                id: 'root',
+                                expanded:true
+                            }
+                        }),
+                        listeners:{
+                            afterrender:function(self){
+                                var form = me.child('form').getForm();
+                                var render_shop = form.findField('render_shop');
+                                var root = self.getRootNode();
+                                if(render_shop && render_shop.getValue()){
+                                    root.appendChild(Ext.JSON.decode(render_shop.getValue()));
+                                }
+                                root.expand(true);
+                            },
+                            activate:function(self){
+                            }
+                        }
                     },{
                         title: '优惠套装',
                         layout: 'fit',

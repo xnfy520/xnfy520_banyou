@@ -27,12 +27,20 @@ Ext.define('Xnfy.controller.ClassifyMenu', {
                             if(selected.raw.configuration){
                                 var mergerC = selected.raw.configuration.split('|');
                                 if(mergerC.length>0){
+                                    var title = form.getForm().findField('title');
+                                    var alias = form.getForm().findField('alias');
+                                    var indexing = form.getForm().findField('indexing');
+                                    var add =panel.child('gridpanel').down('[itemId=add]');
+                                    var deletes =panel.child('gridpanel').down('[itemId=delete]');
                                     if(_.contains(mergerC, 'shop')){
+                                        alias.hide();
+                                        indexing.hide();
                                         panel.setTitle(selected.data.title+' 店铺');
+                                        add.setText('添加店铺');
+                                        deletes.setText('删除店铺');
                                         panel.child('gridpanel').down('[dataIndex=title]').text='店铺名称';
                                         panel.child('gridpanel').down('[dataIndex=indexing]').hidden = true;
                                         panel.child('gridpanel').down('[dataIndex=number]').hidden = true;
-                                        var title = form.getForm().findField('title');
                                         title.setFieldLabel('店铺名称');
                                         title.emptyText = '店铺名称';
                                         var shop = {
@@ -115,6 +123,18 @@ Ext.define('Xnfy.controller.ClassifyMenu', {
                                         });
                                         combobox_image.bindStore(newstore);
                                         combobox_image.setValue(0);
+                                    }else if(_.contains(mergerC, 'delivery_point')){
+                                        alias.hide();
+                                        indexing.hide();
+                                        panel.setTitle(selected.data.title+' 自提点');
+                                        add.setText('添加自提点');
+                                        deletes.setText('删除自提点');
+                                        panel.child('gridpanel').down('[dataIndex=title]').text='自提点名称';
+                                        panel.child('gridpanel').down('[dataIndex=indexing]').hidden = true;
+                                        panel.child('gridpanel').down('[dataIndex=number]').hidden = true;
+                                        title = form.getForm().findField('title');
+                                        title.setFieldLabel('自提点名称');
+                                        title.emptyText = '自提点名称';
                                     }
                                 }
                             }
@@ -135,14 +155,16 @@ Ext.define('Xnfy.controller.ClassifyMenu', {
                     p.getRootNode().expand();
                 },
                 expand:function(p){
+                    var coll = ['shop'];
                     p.getRootNode().eachChild(function(i){
-                        if(!i.isExpanded()){
-                            i.expand();
+                        if(!_.contains(coll,i.data.indexing)){
+                            if(!i.isExpanded()){
+                                i.expand();
+                            }
                         }
                     });
                 },
                 containerclick:function( self, e, eOpts ){
-                    console.log(self);
                 }
             },
             'xnfymenu [itemId=Configuration]':{
