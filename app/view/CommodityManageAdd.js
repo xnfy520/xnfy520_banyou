@@ -343,9 +343,10 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                         },
                         afterrender:function(){
                             var commodityParams =  this.queryById('commodityParams');
-                            var form = this.child('form').getForm();
+                            var form = me.child('form').getForm();
                             var render_params = form.findField('render_params');
-                            var render_shop = form.findField('render_shop');
+                            var render_inventorys = form.findField('render_inventorys');
+                            var inventorys = form.findField('inventorys');
                             if(me.data){
                                  Ext.Ajax.request({
                                     url:"admin/commodity/getParameter",
@@ -365,7 +366,30 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                     callback:function(records, operation, success){
                                         if(success.responseText){
                                             var response = Ext.JSON.decode(success.responseText);
-                                            render_shop.setValue(Ext.JSON.encode(response.data));
+                                            if(response.data && response.data.length>0){
+                                                render_inventorys.setValue(Ext.JSON.encode(response.data));
+                                                if(inventorys.getValue()==''){
+                                                    var inventorys_result = [];
+                                                    Ext.Array.forEach(response.data,function(item_a,index_a){ //省
+                                                         Ext.Object.each(item_a.children,function(key_a,value_a){ //市
+                                                            Ext.Object.each(value_a.children,function(key_b, value_b){//区
+                                                                var type = value_b.configuration.split('|');
+                                                                if(_.contains(type, 'shop')){
+                                                                    inventorys_result.push({id:value_b.id, status:1, value:''});
+                                                                    Ext.Object.each(value_b.children,function(key_c, value_c){ //店
+                                                                        inventorys_result.push({id:value_c.id, status:1, value:''});
+                                                                    });
+                                                                }else if(_.contains(type, 'delivery_point')){
+                                                                    inventorys_result.push({id:value_b.id, status:1, value:''});
+                                                                }
+                                                            });
+                                                        });
+                                                    });
+                                                    if(inventorys_result.length>0){
+                                                        inventorys.setValue(Ext.JSON.encode(inventorys_result));
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
                                 });
@@ -410,9 +434,10 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                 hidden:true
                             },{
                                 xtype:'textarea',
-                                name:'render_shop',
-                                fieldLabel:'店铺骨架',
-                                hidden:true
+                                name:'render_inventorys',
+                                fieldLabel:'库存骨架',
+                                hidden:true,
+                                allowBlank: false
                             }],
                             listeners: {
                                 afterlayout:function(me){
@@ -586,8 +611,12 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                 store:Ext.create('Ext.data.Store', {
                                     fields: ['text', 'value'],
                                     data : [
+                                        {"text":"缺货", "value":0},
                                         {"text":"现货", "value":1},
-                                        {"text":"缺货", "value":0}
+                                        {"text":"预定", "value":2},
+                                        {"text":"充足", "value":3},
+                                        {"text":"少量", "value":4},
+                                        {"text":"在途", "value":5}
                                     ]
                                 }),
                                 displayField:'text',
@@ -595,6 +624,9 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                             },
                             renderer:function(value,metaData,record,rowIndex,colIndex,store,view){
                                 var v = value;
+                                /*
+                                    0 缺货 1 现货 2 预定 3 充足 4 少量 5 在途
+                                */
                                 switch(v){
                                     case 0:
                                         v = '缺货';
@@ -602,19 +634,27 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                     case 1:
                                         v = '现货';
                                     break;
+                                    case 2:
+                                        v = '预定';
+                                    break;
+                                    case 3:
+                                        v = '充足';
+                                    break;
+                                    case 4:
+                                        v = '少量';
+                                    break;
+                                    case 5:
+                                        v = '在途';
+                                    break;
                                 }
-                                if(record.data.leaf==true){
-                                    if(record.parentNode.raw.configuration){
-                                        var list = record.parentNode.raw.configuration.split('|');
-                                        if(_.contains(list, 'delivery_point')){
-                                            v = '';
-                                        }
-                                    }
-                                }
-                                /*
-                                    0 缺货
-                                    1 预定
-                                */
+                                // if(record.data.leaf==true){
+                                //     if(record.parentNode.raw.configuration){
+                                //         var list = record.parentNode.raw.configuration.split('|');
+                                //         if(_.contains(list, 'delivery_point')){
+                                //             v = '';
+                                //         }
+                                //     }
+                                // }
                                 return v;
                             }
                         },
@@ -665,15 +705,52 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                         }
                                     },
                                     edit:function(editor, context){
-                                        console.log(editor);
-                                        console.log(context);
+                                        if(context.record && context.record.dirty){
+                                            var form = me.child('form').getForm();
+                                            var inventorys_root = me.queryById('commodityInventory').getRootNode().serialize();
+                                            var inventorys = form.findField('inventorys');
+                                            if(inventorys_root){
+                                                var inventorys_result = [];
+                                                Ext.Object.each(inventorys_root.children, function(index_a, item_a){ //省
+                                                    Ext.Object.each(item_a.children, function(index_b, item_b){ //市
+                                                        Ext.Object.each(item_b.children, function(index_c, item_c){ //区
+                                                            var type = item_c.configuration.split('|');
+                                                            if(_.contains(type, 'shop')){
+                                                                if(context.record.data.id==item_c.id){
+                                                                    console.log(context.record.data.status);
+                                                                    inventorys_result.push({id:context.record.data.id, status:context.record.data.status!==''?context.record.data.status:1, value:context.record.data.value});
+                                                                }else{
+                                                                    inventorys_result.push({id:item_c.id, status:item_c.status!==''?item_c.status:1, value:item_c.value});
+                                                                }
+                                                                Ext.Object.each(item_c.children,function(index_d, item_d){ //店
+                                                                    if(context.record.data.id==item_d.id){
+                                                                        inventorys_result.push({id:context.record.data.id, status:context.record.data.status!==''?context.record.data.status:1, value:context.record.data.value});
+                                                                    }else{
+                                                                        inventorys_result.push({id:item_d.id, status:item_d.status!==''?item_d.status:13, value:item_d.value});
+                                                                    }
+                                                                });
+                                                            }else if(_.contains(type, 'delivery_point')){
+                                                                if(context.record.data.id==item_c.id){
+                                                                    inventorys_result.push({id:context.record.data.id, status:context.record.data.status!==''?context.record.data.status:1, value:context.record.data.value});
+                                                                }else{
+                                                                    inventorys_result.push({id:item_c.id, status:item_c.status!==''?item_c.status:1, value:item_c.value});
+                                                                }
+                                                            }
+                                                        });
+                                                    });
+                                                });
+                                                if(inventorys_result.length>0){
+                                                    inventorys.setValue(Ext.JSON.encode(inventorys_result));
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             })
                         ],
                         store:Ext.create("Ext.data.TreeStore", {
                             fields: [
-                                "title", "status", "value"
+                                "title", "status", "value", "configuration"
                             ],
                             root: {
                                 title: 'root',
@@ -684,11 +761,41 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                         listeners:{
                             afterrender:function(self){
                                 var form = me.child('form').getForm();
-                                var render_shop = form.findField('render_shop');
+                                var render_inventorys = form.findField('render_inventorys');
                                 var root = self.getRootNode();
-                                if(render_shop && render_shop.getValue()){
-                                    root.appendChild(Ext.JSON.decode(render_shop.getValue()));
+                                if(render_inventorys && render_inventorys.getValue()){
+                                    root.appendChild(Ext.JSON.decode(render_inventorys.getValue()));
                                 }
+                                var inventorys = form.findField('inventorys');
+                                if(inventorys.getValue()){
+                                    var inventorys_value = Ext.JSON.decode(inventorys.getValue());
+                                    if(inventorys && inventorys_value.length>0){
+                                        root.eachChild(function(inventorys_item){ //省
+                                            inventorys_item.eachChild(function(inventorys_item_children){ //市
+                                                inventorys_item_children.eachChild(function(inventorys_item_children_a){ //区
+                                                    var type = inventorys_item_children_a.raw.configuration.split('|');
+                                                    if(_.contains(type, 'shop') || _.contains(type, 'delivery_point')){
+                                                        Ext.Array.forEach(inventorys_value,function(re_item,re_index){
+                                                            if(inventorys_item_children_a.raw.id==re_item.id){
+                                                                inventorys_item_children_a.updateInfo(true,{status:re_item.status!==''?re_item.status:1,value:re_item.value});
+                                                            }
+                                                        });
+                                                    }
+                                                    if(_.contains(type, 'shop')){
+                                                        inventorys_item_children_a.eachChild(function(inventorys_item_children_b){ //店
+                                                                Ext.Array.forEach(inventorys_value,function(res_item,re_index){
+                                                                    if(inventorys_item_children_b.raw.id==res_item.id){
+                                                                        inventorys_item_children_b.updateInfo(true,{status:res_item.status!==''?res_item.status:1,value:res_item.value});
+                                                                    }
+                                                                });
+                                                        });
+                                                    }
+                                                });
+                                            });
+                                        });
+                                    }
+                                }
+
                                 root.expand(true);
                             },
                             activate:function(self){
@@ -711,6 +818,12 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                 xtype:'textarea',
                                 name:'videos',
                                 // fieldLabel:'商品相关视频',
+                                width:'100%',
+                                hidden:false
+                            },{
+                                xtype:'textarea',
+                                name:'inventorys',
+                                // fieldLabel:'商品库存状态',
                                 width:'100%',
                                 hidden:false
                             }]
@@ -1258,6 +1371,15 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                                         form.owner.queryById('cover').setSrc('');
                                                         form.owner.queryById('cover').setVisible(false);
                                                     }
+                                                    var inventorys = form.findField('inventorys');
+                                                    var inventorys_res = inventorys.getValue();
+                                                    if(response.data.inventorys && inventorys_res){
+                                                        var org = Ext.JSON.decode(response.data.inventorys);
+                                                        inventorys_res = Ext.JSON.decode(inventorys_res);
+                                                        response.data.inventorys = Ext.JSON.encode(_.extend(inventorys_res,org));
+                                                    }else{
+                                                        response.data.inventorys = inventorys_res;
+                                                    }
                                                     form.setValues(response.data);
 
                                                     if(response.data.params){
@@ -1316,6 +1438,38 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                                         me.queryById('aboutVideosType').getStore().reload({params:{type:2,videos_ids:videos_ids,informations_ids:{}}});
                                                     }
 
+                                                    if(response.data.inventorys){
+                                                        var inventorys_value = Ext.JSON.decode(response.data.inventorys);
+                                                        if(inventorys && inventorys_value.length>0){
+                                                            var rootInventorys = me.queryById('commodityInventory').getRootNode();
+                                                            var inventorys_result = [];
+                                                            rootInventorys.eachChild(function(inventorys_item){ //省
+                                                                inventorys_item.eachChild(function(inventorys_item_children){ //市
+                                                                    inventorys_item_children.eachChild(function(inventorys_item_children_a){ //区
+                                                                        var type = inventorys_item_children_a.raw.configuration.split('|');
+                                                                        if(_.contains(type, 'shop') || _.contains(type, 'delivery_point')){
+                                                                            Ext.Array.forEach(inventorys_value,function(re_item,re_index){
+                                                                                if(inventorys_item_children_a.raw.id==re_item.id){
+                                                                                    inventorys_item_children_a.updateInfo(true,{status:re_item.status!==''?re_item.status:1,value:re_item.value});
+                                                                                }
+                                                                            });
+                                                                        }
+                                                                        if(_.contains(type, 'shop')){
+                                                                            inventorys_item_children_a.eachChild(function(inventorys_item_children_b){ //店
+                                                                                    Ext.Array.forEach(inventorys_value,function(res_item,re_index){
+                                                                                        if(inventorys_item_children_b.raw.id==res_item.id){
+                                                                                            inventorys_item_children_b.updateInfo(true,{status:res_item.status!==''?res_item.status:1,value:res_item.value});
+                                                                                        }
+                                                                                    });
+                                                                            });
+                                                                        }
+                                                                    });
+                                                                });
+                                                            });
+                                                        }
+
+                                                    }
+
                                                     Ext.create('Xnfy.util.common').uxNotification(true,'获取数据成功');
                                                     self.up('form').setLoading(false);
                                                 }else{
@@ -1351,15 +1505,42 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
 
                             var commodityParams = me.queryById('commodityParams');
                             var commodityParamsRoot = commodityParams.getRootNode();
-
                             commodityParamsRoot.removeAll();
                             commodityParamsRoot.appendChild(Ext.JSON.decode(values.render_params));
 
                             var informations_store = me.queryById('aboutInformationsAdd').getStore();
                             informations_store.removeAll();
-
                             var videos_store = me.queryById('aboutVideosAdd').getStore();
                             videos_store.removeAll();
+
+                            var render_inventorys = form.findField('render_inventorys');
+                            render_inventorys.setValue(values.render_inventorys);
+
+                            var root = me.queryById('commodityInventory').getRootNode();
+                            var inventorys = form.findField('inventorys');
+                            if(inventorys.getValue()==''){
+                                var inventorys_value = [];
+                                root.eachChild(function(inventorys_item){ //省
+                                    inventorys_item.eachChild(function(inventorys_item_children){ //市
+                                        inventorys_item_children.eachChild(function(inventorys_item_children_a){ //区
+                                            var type = inventorys_item_children_a.raw.configuration.split('|');
+                                            if(_.contains(type, 'shop') || _.contains(type, 'delivery_point')){
+                                                inventorys_item_children_a.updateInfo(true,{status:1,value:''});
+                                                inventorys_value.push({id:inventorys_item_children_a.raw.id, status: 1, value: ''});
+                                            }
+                                            if(_.contains(type, 'shop')){
+                                                inventorys_item_children_a.eachChild(function(inventorys_item_children_b){ //店
+                                                    inventorys_item_children_b.updateInfo(true,{status:1,value:''});
+                                                    inventorys_value.push({id:inventorys_item_children_b.raw.id, status: 1, value: ''});
+                                                });
+                                            }
+                                        });
+                                    });
+                                });
+                                if(inventorys_value.length>0){
+                                    inventorys.setValue(Ext.JSON.encode(inventorys_value));
+                                }
+                            }
 
                             me.queryById('aboutInformationsType').getStore().reload({params:{type:1}});
                             me.queryById('aboutVideosType').getStore().reload({params:{type:2}});
@@ -1413,6 +1594,43 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
 
                                             commodityParamsRoot.removeAll();
                                             commodityParamsRoot.appendChild(Ext.JSON.decode(values.render_params));
+
+                                            var informations_store = me.queryById('aboutInformationsAdd').getStore();
+                                            informations_store.removeAll();
+                                            me.queryById('aboutInformationsType').getStore().reload({params:{type:1}});
+
+                                            var videos_store = me.queryById('aboutVideosAdd').getStore();
+                                            videos_store.removeAll();
+                                            me.queryById('aboutVideosType').getStore().reload({params:{type:2}});
+
+                                            var render_inventorys = form.findField('render_inventorys');
+                                            render_inventorys.setValue(values.render_inventorys);
+
+                                            var inventorys = form.findField('inventorys');
+                                            if(inventorys && inventorys.getValue()==''){
+                                                var inventorys_value = [];
+                                                var commodityInventorysRoot = me.queryById('commodityInventory').getRootNode();
+                                                commodityInventorysRoot.eachChild(function(inventorys_item){ //省
+                                                    inventorys_item.eachChild(function(inventorys_item_children){ //市
+                                                        inventorys_item_children.eachChild(function(inventorys_item_children_a){ //区
+                                                            var type = inventorys_item_children_a.raw.configuration.split('|');
+                                                            if(_.contains(type, 'shop') || _.contains(type, 'delivery_point')){
+                                                                inventorys_item_children_a.updateInfo(true,{status:1,value:''});
+                                                                inventorys_value.push({id:inventorys_item_children_a.raw.id, status: 1, value: ''});
+                                                            }
+                                                            if(_.contains(type, 'shop')){
+                                                                inventorys_item_children_a.eachChild(function(inventorys_item_children_b){ //店
+                                                                    inventorys_item_children_b.updateInfo(true,{status:1,value:''});
+                                                                    inventorys_value.push({id:inventorys_item_children_b.raw.id, status: 1, value: ''});
+                                                                });
+                                                            }
+                                                        });
+                                                    });
+                                                });
+                                                if(inventorys_value.length>0){
+                                                    inventorys.setValue(Ext.JSON.encode(inventorys_value));
+                                                }
+                                            }
 
                                             forms.queryById('base').expand();
                                             tabpanelCenter.setActiveTab(0);
