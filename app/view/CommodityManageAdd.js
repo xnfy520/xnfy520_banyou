@@ -20,18 +20,18 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                 listeners:{
                     render:function(){
                         if(me.data.parent){
-                                Ext.Ajax.request({
-                                    url:"admin/article/getRelation",
-                                    method:'POST',
-                                    params:{indexing:me.data.parent.indexing},
-                                    callback:function(records, operation, success){
-                                        var response = Ext.JSON.decode(success.responseText);
-                                        if(response.data){
-                                            me.relationPid = response.data.id;
-                                        }
+                            Ext.Ajax.request({
+                                url:"admin/article/getRelation",
+                                method:'POST',
+                                params:{indexing:me.data.parent.indexing},
+                                callback:function(records, operation, success){
+                                    var response = Ext.JSON.decode(success.responseText);
+                                    if(response.data){
+                                        me.relationPid = response.data.id;
                                     }
-                                });
-                            }
+                                }
+                            });
+                        }
                     }
                 },
                 items: [{
@@ -154,11 +154,11 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                             if(responses.success && responses.data){
                                                 Ext.Array.forEach(responses.data,function(item,index,all){
                                                     if(item.childs){
-                                                        Ext.Array.forEach(item.childs,function(it,ind,al){
-                                                            if(it.alias){
-                                                                item.childs[ind].title = (it.alias ? it.title+'（'+it.alias+'）' : '');
-                                                            }
-                                                        });
+                                                        // Ext.Array.forEach(item.childs,function(it,ind,al){
+                                                        //     if(it.alias){
+                                                        //         item.childs[ind].title = (it.alias ? it.title+'（'+it.alias+'）' : '');
+                                                        //     }
+                                                        // });
                                                         item.childs.unshift({title:'请选择'+item.title,id:0});
                                                         // var multi = ['orientation','gsm'];
                                                         var mul = false;
@@ -340,6 +340,18 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                     listeners:{
                         render:function(){
                             this.el.applyStyles('background:white');
+                            var pa = ['accessorie_division','accessorie_division','accessorie_division'];
+                            if(me.data){
+                                if(_.contains(pa, me.data.parent.indexing)){
+                                    // me.queryById('commoditySuit').close();
+                                    // me.queryById('commodityCombination').close();
+                                    me.queryById('commoditySuit').disable();
+                                    me.queryById('commodityCombination').disable();
+                                    me.queryById('commodityParams').disable();
+                                    me.queryById('aboutVideos').disable();
+                                    me.queryById('aboutInformations').disable();
+                                }
+                            }
                         },
                         afterrender:function(){
                             var commodityParams =  this.queryById('commodityParams');
@@ -400,7 +412,7 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                         tabConfig: {
                             style:'margin:0 1px 0 5px'
                         },
-                        title:'商品详情',
+                        title:'商品介绍',
                         defaults: {
                         },
                         defaultType: 'textfield',
@@ -453,116 +465,6 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                         title:'图片列表',
                         layout: 'fit',
                         items: []
-                    },{
-                        title:'详细参数',
-                        xtype:'treepanel',
-                        itemId:'commodityParams',
-                        rootVisible: false,
-                        useArrows:true,
-                        singleExpand: true,
-                        style:'border-top:1px solid #C0C0C0;',
-                        margin:'5 0 0 0',
-                        columns: [{
-                            xtype: 'treecolumn',
-                            text: '参数名',
-                            dataIndex: "title",
-                            width:300,
-                            maxWidth:300,
-                            // flex: 0.3,
-                            sortable: false
-                        },
-                        {
-                            text: "参数值",
-                            dataIndex: "value",
-                            // flex: 0.4,
-                            width:450,
-                            sortable: false,
-                            editor: 'textfield',
-                            renderer:function(value,metaData,record,rowIndex,colIndex,store,view){
-                                var v = value;
-                                if(record.data.leaf==true){
-                                    v = Ext.util.Format.stripTags(value);
-                                    metaData.tdAttr = 'data-qtip="' + v + '"';
-                                }
-                                return v;
-                            }
-                        }],
-                        plugins: [
-                            Ext.create('Ext.grid.plugin.CellEditing', {
-                                pluginId:'paramsSave',
-                                clicksToEdit: 1,
-                                listeners: {
-                                    cancelEdit: function(editor, context) {
-                                    },
-                                    beforeedit:function(editor, context){
-                                        if(!context.record.data.leaf){
-                                            return false;
-                                        }
-                                    },
-                                    edit:function(editor, context){
-                                        var params = me.queryById('commodityParams');
-                                        var datas = params.getRootNode().serialize();
-                                        var result = [];
-                                        Ext.Array.forEach(datas.children,function(item,index,all){
-                                            if(item.leaf==false){
-                                                if(item.children.length>0){
-                                                    Ext.Array.forEach(item.children,function(ite,ind,all){
-                                                        if(ite.value!=''){
-                                                            result.push({id:ite.id,value:ite.value});
-                                                        }
-                                                    });
-                                                }
-                                            }
-                                        });
-                                        if(result.length>0){
-                                            var form = me.child('form').getForm();
-                                            var params_result = form.findField('params');
-                                            params_result.setValue(Ext.JSON.encode(result));
-                                        }
-                                    }
-                                }
-                            })
-                        ],
-                        store:Ext.create("Ext.data.TreeStore", {
-                            fields: [
-                                "title", "value"
-                            ],
-                            root: {
-                                title: 'root',
-                                id: 'root',
-                                expanded:true
-                            }
-                        }),
-                        listeners:{
-                            afterrender:function(self){
-                                var form = me.child('form').getForm();
-                                var render_params = form.findField('render_params');
-                                var root = self.getRootNode();
-                                if(render_params && render_params.getValue()){
-                                    root.appendChild(Ext.JSON.decode(render_params.getValue()));
-                                }
-                                var params = form.findField('params');
-                                root.eachChild(function(params_item){
-                                    params_item.updateInfo(true,{value:'<i><small>共 '+params_item.childNodes.length+' 项</small></i>'});
-                                });
-                                if(params.getValue()){
-                                    var params_value = Ext.JSON.decode(params.getValue());
-                                    if(params && params_value.length>0){
-                                        root.eachChild(function(params_item){
-                                            params_item.eachChild(function(params_item_children){
-                                                Ext.Array.forEach(params_value,function(re_item,re_index){
-                                                    if(params_item_children.internalId==re_item.id){
-                                                        params_item_children.updateInfo(true,{value:re_item.value});
-                                                    }
-                                                });
-                                            });
-                                        });
-                                    }
-                                }
-                            },
-                            activate:function(self){
-                            }
-                        }
                     },{
                         title: '库存状态',
                          xtype:'treepanel',
@@ -717,7 +619,6 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                                             var type = item_c.configuration.split('|');
                                                             if(_.contains(type, 'shop')){
                                                                 if(context.record.data.id==item_c.id){
-                                                                    console.log(context.record.data.status);
                                                                     inventorys_result.push({id:context.record.data.id, status:context.record.data.status!==''?context.record.data.status:1, value:context.record.data.value});
                                                                 }else{
                                                                     inventorys_result.push({id:item_c.id, status:item_c.status!==''?item_c.status:1, value:item_c.value});
@@ -802,31 +703,269 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                             }
                         }
                     },{
+                        title:'详细参数',
+                        xtype:'treepanel',
+                        itemId:'commodityParams',
+                        rootVisible: false,
+                        useArrows:true,
+                        singleExpand: true,
+                        style:'border-top:1px solid #C0C0C0;',
+                        margin:'5 0 0 0',
+                        columns: [{
+                            xtype: 'treecolumn',
+                            text: '参数名',
+                            dataIndex: "title",
+                            width:300,
+                            maxWidth:300,
+                            editor: 'textfield',
+                            // flex: 0.3,
+                            sortable: false
+                        },
+                        {
+                            text: "参数值",
+                            dataIndex: "value",
+                            // flex: 0.4,
+                            width:450,
+                            sortable: false,
+                            editor: 'textfield',
+                            renderer:function(value,metaData,record,rowIndex,colIndex,store,view){
+                                var v = value;
+                                if(record.data.leaf==true){
+                                    v = Ext.util.Format.stripTags(value);
+                                    metaData.tdAttr = 'data-qtip="' + v + '"';
+                                }
+                                return v;
+                            }
+                        }],
+                        plugins: [
+                            Ext.create('Ext.grid.plugin.CellEditing', {
+                                pluginId:'paramsSave',
+                                clicksToEdit: 1,
+                                listeners: {
+                                    cancelEdit: function(editor, context) {
+                                    },
+                                    beforeedit:function(editor, context){
+                                        if(!context.record.data.leaf){
+                                            return false;
+                                        }
+                                    },
+                                    edit:function(editor, context){
+                                        var params = me.queryById('commodityParams');
+                                        var datas = params.getRootNode().serialize();
+                                        var result = [];
+                                        Ext.Array.forEach(datas.children,function(item,index,all){
+                                            if(item.leaf==false){
+                                                if(item.children.length>0){
+                                                    Ext.Array.forEach(item.children,function(ite,ind,all){
+                                                        if(ite.value!=''){
+                                                            result.push({id:ite.id,value:ite.value});
+                                                        }
+                                                    });
+                                                }
+                                            }
+                                        });
+                                        if(result.length>0){
+                                            var form = me.child('form').getForm();
+                                            var params_result = form.findField('params');
+                                            params_result.setValue(Ext.JSON.encode(result));
+                                        }
+                                    }
+                                }
+                            })
+                        ],
+                        store:Ext.create("Ext.data.TreeStore", {
+                            fields: [
+                                "title", "value"
+                            ],
+                            root: {
+                                title: 'root',
+                                id: 'root',
+                                expanded:true
+                            }
+                        }),
+                        listeners:{
+                            afterrender:function(self){
+                                var form = me.child('form').getForm();
+                                var render_params = form.findField('render_params');
+                                var root = self.getRootNode();
+                                if(render_params && render_params.getValue()){
+                                    root.appendChild(Ext.JSON.decode(render_params.getValue()));
+                                }
+                                var params = form.findField('params');
+                                root.eachChild(function(params_item){
+                                    params_item.updateInfo(true,{value:'<i><small>共 '+params_item.childNodes.length+' 项</small></i>'});
+                                });
+                                if(params.getValue()){
+                                    var params_value = Ext.JSON.decode(params.getValue());
+                                    if(params && params_value.length>0){
+                                        root.eachChild(function(params_item){
+                                            params_item.eachChild(function(params_item_children){
+                                                Ext.Array.forEach(params_value,function(re_item,re_index){
+                                                    if(params_item_children.internalId==re_item.id){
+                                                        params_item_children.updateInfo(true,{value:re_item.value});
+                                                    }
+                                                });
+                                            });
+                                        });
+                                    }
+                                }
+                            },
+                            activate:function(self){
+                            }
+                        }
+                    },{
                         title: '优惠套装',
-                        layout: 'fit',
-                        items: []
+                        layout: 'border',
+                        xtype: 'panel',
+                        itemId:'commoditySuit',
+                        bodyStyle:'background:white;',
+                        margin:'-5px',
+                        items: [{
+                            xtype:'gridpanel',
+                            flex: 1,
+                            region: 'west',
+                            columns: [
+                                { text: '#',  dataIndex: 'id', width:70},
+                                { text: '商品标题', dataIndex: 'title', flex: 1 },
+                                { text: '价格', dataIndex: 'price', width:100 }
+                            ],
+                            style: {
+                                borderStyle: 'solid',
+                                borderWidth:"0 5px 0 0",
+                                borderColor:"#ADD2ED"
+                            },
+                            dockedItems: [{
+                                xtype: 'toolbar',
+                                padding:'5px 0 5px 5px',
+                                items: [
+                                {
+                                    xtype: 'searchfield',
+                                    width:'100%',
+                                    emptyText: '输入关键字',
+                                    labelSeparator:'',
+                                    fieldLabel: '商品列表',
+                                    labelWidth:60,
+                                    labelStyle:'font-weight:bold',
+                                    store:Ext.create('Xnfy.store.CommodityArticle')
+                                }]
+                            }]
+                        },{
+                            xtype:'treepanel',
+                            flex: 1,
+                            region: 'center',
+                            displayField:'title',
+                            rootVisible: false,
+                            // useArrows:true,
+                            style:'border-top:1px solid #C0C0C0;',
+                            hideHeaders: true,
+                            columns: [{
+                                xtype: 'treecolumn',
+                                text: '参数名',
+                                dataIndex: "title",
+                                editor: 'textfield',
+                                flex: 1,
+                                sortable: false
+                            }],
+                            plugins: [
+                                Ext.create('Ext.grid.plugin.CellEditing', {
+                                    clicksToEdit: 1,
+                                    listeners: {
+                                        cancelEdit: function(editor, context) {
+                                        },
+                                        beforeedit:function(editor, context){
+                                            if(context.record.data.leaf){
+                                                return false;
+                                            }
+                                        },
+                                        edit:function(editor, context){
+                                        }
+                                    }
+                                })
+                            ],
+                            store:Ext.create("Ext.data.TreeStore", {
+                                fields: [
+                                    "id","title"
+                                ],
+                                root: {
+                                    expanded: true,
+                                    children: [
+                                        {
+                                            title: "套装1",
+                                            expanded: true,
+                                            children: [
+                                                {
+                                                    title: "商品1",
+                                                    leaf: true
+                                                },
+                                                {
+                                                    title: "商品2",
+                                                    leaf: true
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            title: "套装2"
+                                        },
+                                        {
+                                            title: "套装3",
+                                            expanded: true,
+                                            children: [
+                                                {
+                                                    title: "商品1",
+                                                    leaf: true
+                                                },
+                                                {
+                                                    title: "商品2",
+                                                    leaf: true
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            title: "套装4"
+                                        },
+                                        {
+                                            title: "套装5"
+                                        },
+                                        {
+                                            title: "套装6",
+                                            expanded: true,
+                                            children: [
+                                                {
+                                                    title: "商品1",
+                                                    leaf: true
+                                                },
+                                                {
+                                                    title: "商品2",
+                                                    leaf: true
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            title: "套装7"
+                                        }
+                                    ]
+                                }
+                            }),
+                            dockedItems: [{
+                                xtype: 'toolbar',
+                                padding:'5px 0 5px 5px',
+                                items: [{
+                                    xtype: 'displayfield',
+                                    labelSeparator:'',
+                                    fieldLabel: '套装列表',
+                                    labelStyle:'font-weight:bold'
+                                },
+                                    '->',
+                                {
+                                    xtype:'button',
+                                    text:'添加套装'
+                                }]
+                            }]
+                        }]
                     },{
                         title: '推荐组合',
                         layout: 'auto',
-                        items: [{
-                                xtype:'textarea',
-                                name:'informations',
-                                // fieldLabel:'商品相关资讯',
-                                width:'100%',
-                                hidden:false
-                            },{
-                                xtype:'textarea',
-                                name:'videos',
-                                // fieldLabel:'商品相关视频',
-                                width:'100%',
-                                hidden:false
-                            },{
-                                xtype:'textarea',
-                                name:'inventorys',
-                                // fieldLabel:'商品库存状态',
-                                width:'100%',
-                                hidden:false
-                            }]
+                        itemId:'commodityCombination'
                     },{
                         title: '相关资讯',
                         xtype: 'panel',
@@ -1031,7 +1170,7 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                             itemId:'aboutVideosType',
                             flex: 1,
                             region: 'west',
-                            title: '资讯列表',
+                            title: '视频列表',
                             header:false,
                             multiSelect: true,
                             viewConfig: {
@@ -1065,7 +1204,7 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                     width:'100%',
                                     emptyText: '输入关键字',
                                     labelSeparator:'',
-                                    fieldLabel: '资讯列表',
+                                    fieldLabel: '视频列表',
                                     labelWidth:60,
                                     labelStyle:'font-weight:bold',
                                     store:Ext.create('Xnfy.store.CommodityArticle')
@@ -1082,7 +1221,7 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                             region: 'center',
                             itemId:'aboutVideosAdd',
                             flex: 1,
-                            title: '添加资讯',
+                            title: '添加视频',
                             header:false,
                             multiSelect: true,
                             listeners:{
@@ -1165,7 +1304,7 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                 items: [{
                                     xtype: 'displayfield',
                                     labelSeparator:'',
-                                    fieldLabel: '添加资讯',
+                                    fieldLabel: '添加视频',
                                     labelWidth:60,
                                     labelStyle:'font-weight:bold'
                                 },'->',{
@@ -1187,6 +1326,29 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                             // }
                             ]
                         }]
+                    },{
+                        title: '参数集',
+                        layout: 'auto',
+                        // hidden:true,
+                        items: [{
+                                xtype:'textarea',
+                                name:'informations',
+                                // fieldLabel:'商品相关资讯',
+                                width:'100%',
+                                hidden:false
+                            },{
+                                xtype:'textarea',
+                                name:'videos',
+                                // fieldLabel:'商品相关视频',
+                                width:'100%',
+                                hidden:false
+                            },{
+                                xtype:'textarea',
+                                name:'inventorys',
+                                // fieldLabel:'商品库存状态',
+                                width:'100%',
+                                hidden:false
+                            }]
                     }]
                 }],
                 dockedItems: [{

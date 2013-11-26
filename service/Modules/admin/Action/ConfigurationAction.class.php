@@ -103,18 +103,19 @@ class ConfigurationAction extends CommonAction {
 
 	function getBrandAllocationStructure(){
 		if(F("BrandAllocationStructure") || !isset($_POST['id'])){
-			$structure = F("BrandAllocationStructure");
+			// $structure = F("BrandAllocationStructure");
 			$struc = array();
-			$structure = json_decode(stripslashes($structure),true);
-			foreach($structure as $key=>$value){
-				foreach($value['children'] as $k=>$v){
-					if($v['id']==$_POST['id']){
-						if(count($v['children'])>0){
-							$struc = $v['children'];
-						}
-					}
-				}
-			}
+			// $structure = json_decode(stripslashes($structure),true);
+			// foreach($structure as $key=>$value){
+			// 	foreach($value['children'] as $k=>$v){
+			// 		if($v['id']==$_POST['id']){
+			// 			if(count($v['children'])>0){
+			// 				$struc = $v['children'];
+			// 			}
+			// 		}
+			// 	}
+			// }
+			$struc = $this->getDep($_POST['id']);
 			echo json_encode(array(
 							"success"=>true,
 							"data"=>$struc
@@ -125,6 +126,30 @@ class ConfigurationAction extends CommonAction {
 							"msg"=>'异常操作'
 						));
 		}
+	}
+
+	function getDep($id){
+		$structure = F("BrandAllocationStructure");
+		$struc = array();
+		$structure = json_decode(stripslashes($structure),true);
+		foreach($structure as $key=>$value){
+			foreach($value['children'] as $k=>$v){
+				if($v['id']==$_POST['id']){
+					if(count($v['children'])>0){
+						$struc = $v['children'];
+					}
+				}else{
+					foreach($v['children'] as $kk=>$vv){
+						if($vv['id']==$_POST['id']){
+							if(count($vv['children'])>0){
+								$struc = $vv['children'];
+							}
+						}
+					}
+				}
+			}
+		}
+		return $struc;
 	}
 
 	function saveBrandAllocationStructure(){

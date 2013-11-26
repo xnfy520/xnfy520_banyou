@@ -187,6 +187,14 @@ class CommodityAction extends CommonAction {
 											}
 											$struc['childs'] = $v['children'];
 										}
+									}else{
+										foreach($v['children'] as $kk=>$vv){
+											if($vv['id']==$_POST['id']){
+												if(count($vv['children'])>0){
+													$struc['childs'] = $vv['children'];
+												}
+											}
+										}
 									}
 								}
 							}

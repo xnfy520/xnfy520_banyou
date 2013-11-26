@@ -603,11 +603,13 @@ Ext.define('Xnfy.controller.ClassifyMenu', {
                 store: Ext.create('Ext.data.TreeStore', {
                     fields: [
                         {
-                            name: 'id',
-                            type:'int'
+                            name: 'id'
                         },
                         {
                             name: 'title'
+                        },
+                        {
+                            name:'alias'
                         }
                     ],
                     root: {
@@ -688,12 +690,22 @@ Ext.define('Xnfy.controller.ClassifyMenu', {
                                 Ext.Array.forEach(records,function(item,index,all){
                                     if(item.data.indexing!='brands'){
                                         var record_ = [];
-                                        Ext.Array.forEach(item.data.children,function(items,indexs,alls){
+                                        Ext.Array.forEach(item.childNodes,function(items,indexs,alls){
+                                            var record__ = [];
+                                            Ext.Array.forEach(items.childNodes,function(itemss,indexss,allss){
+                                                record__.push({
+                                                    allowDrag:false,
+                                                    id:itemss.data.id,
+                                                    title:itemss.data.title,
+                                                    indexing:itemss.data.indexing
+                                                });
+                                            });
                                             record_.push({
                                                 allowDrag:false,
-                                                id:items.id,
-                                                title:items.title,
-                                                indexing:items.indexing
+                                                id:items.data.id,
+                                                title:items.data.title,
+                                                indexing:items.data.indexing,
+                                                children:record__
                                             });
                                         });
                                         record.push({
@@ -703,6 +715,7 @@ Ext.define('Xnfy.controller.ClassifyMenu', {
                                             id:item.data.id,
                                             title:item.data.title,
                                             indexing:item.data.indexing,
+                                            flag:'root',
                                             children:record_
                                         });
                                     }
@@ -710,7 +723,6 @@ Ext.define('Xnfy.controller.ClassifyMenu', {
                                 menud.appendChild(record);
                                 menud.expand(true);
                                 menud.collapseChildren();
-
                             }
                         }});
                     },
@@ -775,6 +787,19 @@ Ext.define('Xnfy.controller.ClassifyMenu', {
                                                     return false;
                                                 }
                                             }
+                                        }
+                                    }
+                                }else{
+                                    if(targetNode.childNodes.length>0){
+                                        if(targetNode.childNodes[0].data.leaf){
+                                            Ext.Array.forEach(targetNode.childNodes,function(items_a,indexs_a,alls_a){
+                                                if(items_a.data.id==dragData.records[0].data.id){
+                                                    allow = false;
+                                                }
+                                            });
+                                            return allow;
+                                        }else{
+                                            return false;
                                         }
                                     }
                                 }
