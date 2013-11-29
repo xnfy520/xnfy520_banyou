@@ -238,4 +238,41 @@ class CommodityAction extends CommonAction {
 		return $list;
 	}
 
+	function getAccessories(){
+		$MODULE_NAME = D(MODULE_NAME);
+		import("@.ORG.Util.emit_ajax_page");
+		
+		$search = array();
+
+		if(isset($_GET['pid'])){
+			$search['category'] = array('in',$_GET['pid']);
+		}
+
+		if(isset($_GET['query']) && !empty($_GET['query'])){
+			$search['_string'] = 'id like "%'.$_GET['query'].'%" OR title like "%'.$_GET['query'].'%" OR name like "%'.$_GET['query'].'%"';
+		}
+		$counts = $MODULE_NAME->where($search)->count();
+
+		$page = new page($counts,$_GET['limit'],$_GET['page'] ? $_GET['page'] : 0);
+
+		$sort = 'id DESC';
+		if(isset($_GET['sort'])){
+			$params = json_decode(stripslashes($_GET['sort']),true);
+			if(is_array($params)){
+				$min_sort = array();
+				for($i=0;$i<count($params);$i++){
+					$min_sort[] = implode(' ', $params[$i]);
+				}
+			}
+			$sort = implode(',', $min_sort);
+		}
+
+		$list = $MODULE_NAME->field('id,name,title,selling_price')->where($search)->limit($page->limit)->order($sort)->select();
+		echo json_encode(array(
+						"success"=>true,
+						"data"=>$list,
+						"total"=>$counts
+					));
+	}
+
 }

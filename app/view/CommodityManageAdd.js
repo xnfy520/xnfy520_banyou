@@ -31,6 +31,19 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                     }
                                 }
                             });
+                            Ext.Ajax.request({
+                                url:"admin/classify/getCommodityAccessorie",
+                                params:{type : me.data.parent.indexing},
+                                method:'POST',
+                                callback:function(records, operation, success){
+                                    if(success.responseText){
+                                        var response = Ext.JSON.decode(success.responseText);
+                                        if(response.data && response.data.length>0){
+                                            me.suitData = response.data;
+                                        }
+                                    }
+                                }
+                            });
                         }
                     }
                 },
@@ -827,31 +840,140 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                             columns: [
                                 { text: '#',  dataIndex: 'id', width:70},
                                 { text: '商品标题', dataIndex: 'title', flex: 1 },
-                                { text: '价格', dataIndex: 'price', width:100 }
+                                {
+                                    text: '价格',
+                                    dataIndex: 'selling_price',
+                                    width:100,
+                                    align:'right',
+                                    renderer:function(value,metaData,record,rowIndex,colIndex,store,view){
+                                        return '&yen; '+Ext.util.Format.number(value,'0,000.00');
+                                    }
+                                }
                             ],
                             style: {
                                 borderStyle: 'solid',
                                 borderWidth:"0 5px 0 0",
                                 borderColor:"#ADD2ED"
                             },
+                            multiSelect: true,
+                            viewConfig: {
+                                plugins: {
+                                    ptype: 'gridviewdragdrop',
+                                    ddGroup: 'selDD',
+                                    enableDrop:false
+                                },
+                                listeners: {
+                                    drop: function(node, data, dropRec, dropPosition) {
+                                    },
+                                    itemremove:function(record, index){
+                                    }
+                                },
+                                copy:true
+                            },
+                            listeners:{
+                                afterrender:function(self){
+                                    var filter = [];
+                                    if(me.suitData){
+                                        Ext.Array.forEach(me.suitData, function(item){
+                                            filter.push(item.id);
+                                        });
+                                    }
+                                    var stores = Ext.create('Xnfy.store.CorrelationCommodity');
+                                     var store = stores.load({scope:this,params:{pid:filter.toString()},callback:function(records,operation,success){
+                                     }});
+                                    self.reconfigure(store);
+                                    self.queryById('pagingtoolbarSuit').bindStore(store);
+                                }
+                            },
                             dockedItems: [{
                                 xtype: 'toolbar',
                                 padding:'5px 0 5px 5px',
                                 items: [
+                                    {
+                                    itemId:'suit_treepicker',
+                                    xtype: 'treepicker',
+                                    // fieldLabel:'所属分类',
+                                    // flex: 1,
+                                    autoScroll:true,
+                                    minPickerHeight:'auto',
+                                    maxPickerHeight:200,
+                                    emptyText:'无分类选择',
+                                    blankText:'无分类选择',
+                                    displayField : 'title',
+                                    value:0,
+                                    // margin:'25px 0 0 0',
+                                    labelStyle: 'font-weight:bold;padding-bottom:5px',
+                                    store: Ext.create('Ext.data.TreeStore', {
+                                        fields: ["id","title"],
+                                        root: {
+                                            title:'所有手机配件',
+                                            id:0,
+                                            expanded: true
+                                        }
+                                    }),
+                                    listeners:{
+                                        afterrender:function( self, eOpts ){
+                                            var type = [];
+                                            switch(me.data.parent.indexing){
+                                                case 'cellphone_division':
+                                                    type = 'cellphone';
+                                                break;
+                                                case 'computer_division':
+                                                    type = 'computer';
+                                                break;
+                                                case 'camera_division':
+                                                    type = 'camera';
+                                                break;
+                                            }
+                                            if(type && me.suitData){
+                                                var picker = self.getPicker();
+                                                var root = picker.getRootNode();
+                                                root.appendChild(me.suitData);
+                                                root.eachChild(function(item){
+                                                    item.updateInfo(true,{leaf:true});
+                                                });
+                                            }
+                                        },
+                                        render: function(self){
+                                        },
+                                        select:function( self, record, eOpts ){
+                                            self.collapse();
+                                            if(record.data.root){
+                                                var filter = [];
+                                                if(me.suitData){
+                                                    Ext.Array.forEach(me.suitData, function(item){
+                                                        filter.push(item.id);
+                                                    });
+                                                }
+                                                self.up('gridpanel').getStore().load({params:{pid:filter.toString()}});
+                                            }else if(record.data.id>0){
+                                                self.up('gridpanel').getStore().reload({params:{pid:record.data.id}});
+                                            }
+                                        }
+                                    }
+                                },
                                 {
                                     xtype: 'searchfield',
-                                    width:'100%',
+                                    flex: 1,
                                     emptyText: '输入关键字',
-                                    labelSeparator:'',
-                                    fieldLabel: '商品列表',
-                                    labelWidth:60,
+                                    // labelSeparator:'',
+                                    // fieldLabel: '商品列表',
+                                    // labelWidth:60,
                                     labelStyle:'font-weight:bold',
-                                    store:Ext.create('Xnfy.store.CommodityArticle')
+                                    store:Ext.create('Xnfy.store.CorrelationCommodity')
                                 }]
+                            },{
+                                xtype: 'pagingtoolbar',
+                                itemId:'pagingtoolbarSuit',
+                                dock: 'bottom',
+                                store:Ext.create('Xnfy.store.CorrelationCommodity'),
+                                displayInfo: false,
+                                displayMsg:'<span style="margin-left:-55px">{2}条数据</span>'
                             }]
                         },{
                             xtype:'treepanel',
                             flex: 1,
+                            itemId:'treeSuit',
                             region: 'center',
                             displayField:'title',
                             rootVisible: false,
@@ -860,12 +982,65 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                             hideHeaders: true,
                             columns: [{
                                 xtype: 'treecolumn',
-                                text: '参数名',
+                                text: '套装名称',
                                 dataIndex: "title",
                                 editor: 'textfield',
                                 flex: 1,
                                 sortable: false
                             }],
+                            listeners: {
+                                'itemcontextmenu' : function(menutree, selected, items, index, e) {
+                                    var nodemenu = new Ext.menu.Menu({});
+                                    e.preventDefault();
+                                    e.stopEvent();
+                                    nodemenu = new Ext.menu.Menu({
+                                        floating : true,
+                                        items : [{
+                                            text : "移除所选项",
+                                            handler : function(self) {
+                                                selected.remove();
+                                                var form = me.child('form').getForm();
+                                                var suits = form.findField('suits');
+                                                var treeSuitRoot = me.queryById('treeSuit').getRootNode();
+                                                suits.setValue(treeSuitRoot.childNodes.length>0 ? Ext.JSON.encode(treeSuitRoot.serialize()) : '');
+                                            }
+                                        }]
+                                    });
+                                    nodemenu.showAt(e.getXY());
+                                }
+                            },
+                            viewConfig: {
+                                plugins: {
+                                    ptype: 'treeviewdragdrop',
+                                    ddGroup:    'selDD',
+                                    displayField: 'title',
+                                    enableDrag: true,
+                                    enableDrop: true,
+                                    appendOnly: false,
+                                    sortOnDrop:true
+                                },
+                                listeners: {
+                                    beforedrop: function( node, data, overModel, dropPosition, dropHandlers, eOpts ){
+                                        // data.records[0].setId(_.uniqueId('contacts_'));
+                                        // console.log(data.records[0]);
+                                    },
+                                    drop: function(node, data, dropRec, dropPosition) {
+                                        Ext.Array.forEach(data.records, function(item){
+                                            var id = item.data.id;
+                                            item.setId(_.uniqueId('suits_'));
+                                            item.set('tid',id);
+                                            item.set('leaf',true);
+                                        });
+                                        var form = me.child('form').getForm();
+                                        var suits = form.findField('suits');
+                                        var treeSuitRoot = me.queryById('treeSuit').getRootNode();
+                                        suits.setValue(Ext.JSON.encode(treeSuitRoot.serialize()));
+                                        me.queryById('treeSuit').getView().refresh();
+                                    },
+                                    nodedragover: function( targetNode, position, dragData, e, eOpts ){
+                                    }
+                                }
+                            },
                             plugins: [
                                 Ext.create('Ext.grid.plugin.CellEditing', {
                                     clicksToEdit: 1,
@@ -878,72 +1053,25 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                             }
                                         },
                                         edit:function(editor, context){
+                                            var form = me.child('form').getForm();
+                                            var suits = form.findField('suits');
+                                            var treeSuitRoot = me.queryById('treeSuit').getRootNode();
+                                            suits.setValue(Ext.JSON.encode(treeSuitRoot.serialize()));
                                         }
                                     }
                                 })
                             ],
                             store:Ext.create("Ext.data.TreeStore", {
                                 fields: [
-                                    "id","title"
+                                    "id","title","tid"
                                 ],
                                 root: {
+                                    id:'root',
+                                    title:'root',
                                     expanded: true,
-                                    children: [
-                                        {
-                                            title: "套装1",
-                                            expanded: true,
-                                            children: [
-                                                {
-                                                    title: "商品1",
-                                                    leaf: true
-                                                },
-                                                {
-                                                    title: "商品2",
-                                                    leaf: true
-                                                }
-                                            ]
-                                        },
-                                        {
-                                            title: "套装2"
-                                        },
-                                        {
-                                            title: "套装3",
-                                            expanded: true,
-                                            children: [
-                                                {
-                                                    title: "商品1",
-                                                    leaf: true
-                                                },
-                                                {
-                                                    title: "商品2",
-                                                    leaf: true
-                                                }
-                                            ]
-                                        },
-                                        {
-                                            title: "套装4"
-                                        },
-                                        {
-                                            title: "套装5"
-                                        },
-                                        {
-                                            title: "套装6",
-                                            expanded: true,
-                                            children: [
-                                                {
-                                                    title: "商品1",
-                                                    leaf: true
-                                                },
-                                                {
-                                                    title: "商品2",
-                                                    leaf: true
-                                                }
-                                            ]
-                                        },
-                                        {
-                                            title: "套装7"
-                                        }
-                                    ]
+                                    allowDrop:false
+                                },
+                                listeners:{
                                 }
                             }),
                             dockedItems: [{
@@ -958,7 +1086,19 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                     '->',
                                 {
                                     xtype:'button',
-                                    text:'添加套装'
+                                    text:'添加套装',
+                                    handler: function(self) {
+                                        var treeSuit = me.queryById('treeSuit');
+                                        var treeSuitRoot = treeSuit.getRootNode();
+                                        if(treeSuitRoot.childNodes.length>=10){
+                                            Ext.create('Xnfy.util.common').uxNotification(false,'最多只能添加10套');
+                                        }else{
+                                            treeSuitRoot.appendChild({title:'套装'+(treeSuitRoot.childNodes.length+1),id:_.uniqueId('suit_'),allowDrag:false});
+                                        }
+                                        var form = me.child('form').getForm();
+                                        var suits = form.findField('suits');
+                                        suits.setValue(Ext.JSON.encode(treeSuitRoot.serialize()));
+                                    }
                                 }]
                             }]
                         }]
@@ -1348,6 +1488,11 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                 // fieldLabel:'商品库存状态',
                                 width:'100%',
                                 hidden:false
+                            },{
+                                xtype: 'textarea',
+                                name: 'suits',
+                                width: '100%',
+                                hidden: false
                             }]
                     }]
                 }],

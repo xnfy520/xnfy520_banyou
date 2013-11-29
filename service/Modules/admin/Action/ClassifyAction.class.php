@@ -299,4 +299,61 @@ class ClassifyAction extends CommonAction {
 		}
 	}
 
+	function getCommodityAccessorie(){
+		$MODULE_NAME = D(MODULE_NAME);
+		$commodity = $this->getCommodityRoot('commodity');
+		$result = false;
+		if($commodity){
+			$commodity_type = $this->getCommodityRoot('accessorie_division', 1, $commodity['id']);
+			if($_POST['type'] && !empty($_POST['type'])){
+				$indexing = explode('_', $_POST['type']);
+				if($commodity_type && $indexing[0]){
+					$accessorie = $this->getCommodityRoot($indexing[0], 1, $commodity_type['id']);
+					if($accessorie){
+						$result = $this->getCommodityRoot('', 1, $accessorie['id'], true);
+					}
+				}
+			}
+		}
+		if($result){
+			echo json_encode(array(
+					"success"=>true,
+					"data"=>$result
+				));
+		}else{
+			echo json_encode(array(
+						"success"=>false,
+						"errors"=>array("msg"=>"异常操作")
+					));
+		}
+	}
+
+	function getCommodityRoot($root_indexing='', $enabled=1, $pid=0, $mult=false){
+		$MODULE_NAME = D(MODULE_NAME);
+		if($root_indexing!=''){
+			$search['indexing'] = $root_indexing;
+		}
+		$search['enabled'] = $enabled;
+		$search['pid'] = $pid;
+
+		if($mult){
+			$sort = 'id ASC';
+			if(isset($_GET['sort']) && !empty($_GET['sort'])){
+				if(!empty($_GET['property']) && !empty($_GET['direction'])){
+					$sort = $_GET['propery'].' '.$_GET['direction'];
+				}else if(!empty($_GET['property'])){
+					$sort = $_GET['propery'];
+				}
+			}
+			$commodity = $MODULE_NAME->where($search)->order($sort)->select();
+		}else{
+			$commodity = $MODULE_NAME->where($search)->find();
+		}
+		if($commodity){
+			return $commodity;
+		}else{
+			return false;
+		}
+	}
+
 }
