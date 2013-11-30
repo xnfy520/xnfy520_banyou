@@ -40,6 +40,7 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                         var response = Ext.JSON.decode(success.responseText);
                                         if(response.data && response.data.length>0){
                                             me.suitData = response.data;
+                                            me.combinationData = response.data;
                                         }
                                     }
                                 }
@@ -866,7 +867,7 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                 borderWidth:"0 5px 0 0",
                                 borderColor:"#ADD2ED"
                             },
-                            multiSelect: true,
+                            multiSelect: false,
                             viewConfig: {
                                 plugins: {
                                     ptype: 'gridviewdragdrop',
@@ -1053,6 +1054,27 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                         me.queryById('treeSuit').getView().refresh();
                                     },
                                     nodedragover: function( targetNode, position, dragData, e, eOpts ){
+                                        var allow = true;
+                                        if(targetNode.getOwnerTree().view.id!=dragData.view.id){
+                                            if(targetNode.data.leaf){
+                                                if(targetNode.parentNode.childNodes.length>0){
+                                                    targetNode.parentNode.eachChild(function(item){
+                                                        if(dragData.records[0].raw.id==item.raw.id){
+                                                            allow = false;
+                                                        }
+                                                    });
+                                                }
+                                            }else{
+                                                if(targetNode.childNodes.length>0){
+                                                    targetNode.eachChild(function(item){
+                                                        if(dragData.records[0].raw.id==item.raw.id){
+                                                            allow = false;
+                                                        }
+                                                    });
+                                                }
+                                            }
+                                        }
+                                        return allow;
                                     }
                                 }
                             },
@@ -1120,8 +1142,315 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                         }]
                     },{
                         title: '推荐组合',
-                        layout: 'auto',
-                        itemId:'commodityCombination'
+                        layout: 'border',
+                        xtype: 'panel',
+                        itemId:'commodityCombination',
+                        bodyStyle:'background:white;',
+                        margin:'-5px',
+                        items: [{
+                            xtype:'gridpanel',
+                            flex: 1,
+                            region: 'west',
+                            columns: [
+                                { text: '#',  dataIndex: 'id', width:70},
+                                {
+                                    text: '商品标题',
+                                    dataIndex: 'title',
+                                    flex: 1,
+                                    renderer:function(value,metaData,record,rowIndex,colIndex,store,view){
+                                        var v = Ext.util.Format.stripTags(value);
+                                        metaData.tdAttr = 'data-qtip="' + v + '"';
+                                        return v;
+                                    }
+                                },
+                                {
+                                    text: '价格',
+                                    dataIndex: 'selling_price',
+                                    width:100,
+                                    align:'right',
+                                    renderer:function(value,metaData,record,rowIndex,colIndex,store,view){
+                                        return '&yen; '+Ext.util.Format.number(value,'0,000.00');
+                                    }
+                                }
+                            ],
+                            style: {
+                                borderStyle: 'solid',
+                                borderWidth:"0 5px 0 0",
+                                borderColor:"#ADD2ED"
+                            },
+                            multiSelect: false,
+                            viewConfig: {
+                                plugins: {
+                                    ptype: 'gridviewdragdrop',
+                                    ddGroup: 'selDD',
+                                    enableDrop:false
+                                },
+                                listeners: {
+                                    drop: function(node, data, dropRec, dropPosition) {
+                                    },
+                                    itemremove:function(record, index){
+                                    }
+                                },
+                                copy:true
+                            },
+                            listeners:{
+                                afterrender:function(self){
+                                    var filter = [];
+                                    if(me.combinationData){
+                                        Ext.Array.forEach(me.combinationData, function(item){
+                                            filter.push(item.id);
+                                        });
+                                    }
+                                    var stores = Ext.create('Xnfy.store.CorrelationCommodity');
+                                     var store = stores.load({scope:this,params:{pid:filter.toString()},callback:function(records,operation,success){
+                                     }});
+                                    self.reconfigure(store);
+                                    self.queryById('pagingtoolbarCombination').bindStore(store);
+                                }
+                            },
+                            dockedItems: [{
+                                xtype: 'toolbar',
+                                padding:'5px 0 5px 5px',
+                                items: [
+                                    {
+                                    itemId:'combination_treepicker',
+                                    xtype: 'treepicker',
+                                    // fieldLabel:'所属分类',
+                                    // flex: 1,
+                                    autoScroll:true,
+                                    minPickerHeight:'auto',
+                                    maxPickerHeight:200,
+                                    emptyText:'无分类选择',
+                                    blankText:'无分类选择',
+                                    displayField : 'title',
+                                    value:0,
+                                    // margin:'25px 0 0 0',
+                                    labelStyle: 'font-weight:bold;padding-bottom:5px',
+                                    store: Ext.create('Ext.data.TreeStore', {
+                                        fields: ["id","title"],
+                                        root: {
+                                            title:'全部相关配件',
+                                            id:0,
+                                            expanded: true
+                                        }
+                                    }),
+                                    listeners:{
+                                        afterrender:function( self, eOpts ){
+                                            var type = [];
+                                            var picker = self.getPicker();
+                                            var root = picker.getRootNode();
+                                            switch(me.data.parent.indexing){
+                                                case 'cellphone_division':
+                                                    type = 'cellphone';
+                                                    root.updateInfo(false, {title:'全部手机相关配件'});
+                                                break;
+                                                case 'computer_division':
+                                                    type = 'computer';
+                                                    root.updateInfo(false, {title:'全部电脑相关配件'});
+                                                break;
+                                                case 'camera_division':
+                                                    type = 'camera';
+                                                    root.updateInfo(false, {title:'全部相机相关配件'});
+                                                break;
+                                            }
+                                            if(type && me.combinationData){
+                                                root.appendChild(me.combinationData);
+                                                root.eachChild(function(item){
+                                                    item.updateInfo(true,{leaf:true});
+                                                });
+                                            }
+                                            self.setValue(0);
+                                        },
+                                        render: function(self){
+                                        },
+                                        select:function( self, record, eOpts ){
+                                            self.collapse();
+                                            if(record.data.root){
+                                                var filter = [];
+                                                if(me.combinationData){
+                                                    Ext.Array.forEach(me.combinationData, function(item){
+                                                        filter.push(item.id);
+                                                    });
+                                                }
+                                                self.up('gridpanel').getStore().load({params:{pid:filter.toString()}});
+                                            }else if(record.data.id>0){
+                                                self.up('gridpanel').getStore().reload({params:{pid:record.data.id}});
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    xtype: 'searchfield',
+                                    flex: 1,
+                                    emptyText: '输入关键字',
+                                    // labelSeparator:'',
+                                    // fieldLabel: '商品列表',
+                                    // labelWidth:60,
+                                    labelStyle:'font-weight:bold',
+                                    store:Ext.create('Xnfy.store.CorrelationCommodity')
+                                }]
+                            },{
+                                xtype: 'pagingtoolbar',
+                                itemId:'pagingtoolbarCombination',
+                                dock: 'bottom',
+                                store:Ext.create('Xnfy.store.CorrelationCommodity'),
+                                displayInfo: false,
+                                displayMsg:'<span style="margin-left:-55px">{2}条数据</span>'
+                            }]
+                        },{
+                            xtype:'treepanel',
+                            flex: 1,
+                            itemId:'treeCombination',
+                            region: 'center',
+                            displayField:'title',
+                            rootVisible: false,
+                            // useArrows:true,
+                            style:'border-top:1px solid #C0C0C0;',
+                            hideHeaders: true,
+                            columns: [{
+                                xtype: 'treecolumn',
+                                text: '组合名称',
+                                dataIndex: "title",
+                                editor: 'textfield',
+                                flex: 1,
+                                sortable: false
+                            }],
+                            listeners: {
+                                'itemcontextmenu' : function(menutree, selected, items, index, e) {
+                                    var nodemenu = new Ext.menu.Menu({});
+                                    e.preventDefault();
+                                    e.stopEvent();
+                                    nodemenu = new Ext.menu.Menu({
+                                        floating : true,
+                                        items : [{
+                                            text : "移除所选项",
+                                            handler : function(self) {
+                                                selected.remove();
+                                                var form = me.child('form').getForm();
+                                                var combinations = form.findField('combinations');
+                                                var treeCombinationRoot = me.queryById('treeCombination').getRootNode();
+                                                combinations.setValue(treeCombinationRoot.childNodes.length>0 ? Ext.JSON.encode(treeCombinationRoot.serialize()) : '');
+                                            }
+                                        }]
+                                    });
+                                    nodemenu.showAt(e.getXY());
+                                }
+                            },
+                            viewConfig: {
+                                plugins: {
+                                    ptype: 'treeviewdragdrop',
+                                    ddGroup:    'selDD',
+                                    displayField: 'title',
+                                    enableDrag: true,
+                                    enableDrop: true,
+                                    appendOnly: false,
+                                    sortOnDrop:true
+                                },
+                                listeners: {
+                                    beforedrop: function( node, data, overModel, dropPosition, dropHandlers, eOpts ){
+                                        // data.records[0].setId(_.uniqueId('contacts_'));
+                                        // console.log(data.records[0]);
+                                    },
+                                    drop: function(node, data, dropRec, dropPosition) {
+                                        Ext.Array.forEach(data.records, function(item){
+                                            var id = item.data.id;
+                                            item.setId('combinations_'+Ext.Date.format(new Date(), 'time'));
+                                            item.set('tid',id);
+                                            item.set('leaf',true);
+                                        });
+                                        var form = me.child('form').getForm();
+                                        var combinations = form.findField('combinations');
+                                        var treeCombinationRoot = me.queryById('treeCombination').getRootNode();
+                                        combinations.setValue(Ext.JSON.encode(treeCombinationRoot.serialize()));
+                                        me.queryById('treeCombination').getView().refresh();
+                                    },
+                                    nodedragover: function( targetNode, position, dragData, e, eOpts ){
+                                        var allow = true;
+                                        if(targetNode.getOwnerTree().view.id!=dragData.view.id){
+                                            if(targetNode.data.leaf){
+                                                if(targetNode.parentNode.childNodes.length>0){
+                                                    targetNode.parentNode.eachChild(function(item){
+                                                        if(dragData.records[0].raw.id==item.raw.id){
+                                                            allow = false;
+                                                        }
+                                                    });
+                                                }
+                                            }else{
+                                                if(targetNode.childNodes.length>0){
+                                                    targetNode.eachChild(function(item){
+                                                        if(dragData.records[0].raw.id==item.raw.id){
+                                                            allow = false;
+                                                        }
+                                                    });
+                                                }
+                                            }
+                                        }
+                                        return allow;
+                                    }
+                                }
+                            },
+                            plugins: [
+                                Ext.create('Ext.grid.plugin.CellEditing', {
+                                    clicksToEdit: 1,
+                                    listeners: {
+                                        cancelEdit: function(editor, context) {
+                                        },
+                                        beforeedit:function(editor, context){
+                                            if(context.record.data.leaf){
+                                                return false;
+                                            }
+                                        },
+                                        edit:function(editor, context){
+                                            var form = me.child('form').getForm();
+                                            var combinations = form.findField('combinations');
+                                            var treeCombinationRoot = me.queryById('treeCombination').getRootNode();
+                                            combinations.setValue(Ext.JSON.encode(treeCombinationRoot.serialize()));
+                                        }
+                                    }
+                                })
+                            ],
+                            store:Ext.create("Ext.data.TreeStore", {
+                                fields: [
+                                    "id","title","tid"
+                                ],
+                                root: {
+                                    id:'root',
+                                    title:'root',
+                                    expanded: true,
+                                    allowDrop:false,
+                                    allowDrag:false
+                                },
+                                listeners:{
+                                }
+                            }),
+                            dockedItems: [{
+                                xtype: 'toolbar',
+                                padding:'5px 0 5px 5px',
+                                items: [{
+                                    xtype: 'displayfield',
+                                    labelSeparator:'',
+                                    fieldLabel: '组合列表',
+                                    labelStyle:'font-weight:bold'
+                                },
+                                    '->',
+                                {
+                                    xtype:'button',
+                                    text:'添加组合',
+                                    handler: function(self) {
+                                        var treeCombination = me.queryById('treeCombination');
+                                        var treeCombinationRoot = treeCombination.getRootNode();
+                                        if(treeCombinationRoot.childNodes.length>=10){
+                                            Ext.create('Xnfy.util.common').uxNotification(false,'最多只能添加10组');
+                                        }else{
+                                            treeCombinationRoot.appendChild({title:'组合'+(treeCombinationRoot.childNodes.length+1),id:'combination_'+Ext.Date.format(new Date(), 'time'),allowDrag:false});
+                                        }
+                                        var form = me.child('form').getForm();
+                                        var combinations = form.findField('combinations');
+                                        combinations.setValue(Ext.JSON.encode(treeCombinationRoot.serialize()));
+                                    }
+                                }]
+                            }]
+                        }]
                     },{
                         title: '相关资讯',
                         xtype: 'panel',
@@ -1509,6 +1838,11 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                 name: 'suits',
                                 width: '100%',
                                 hidden: false
+                            },{
+                                xtype: 'textarea',
+                                name: 'combinations',
+                                width: '100%',
+                                hidden: false
                             }]
                     }]
                 }],
@@ -1811,6 +2145,29 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                                             });
                                                         }
                                                     }
+
+                                                    var treeCombination = me.queryById('treeCombination');
+                                                    if(treeCombination){
+                                                        if(response.data.combinations){
+                                                            treeCombination.setRootNode(Ext.JSON.decode(response.data.combinations));
+                                                            var combinations = form.findField('combinations');
+                                                            var treeCombinationRoot = treeCombination.getRootNode();
+                                                            treeCombinationRoot.updateInfo(true,{allowDrop:false, allowDrag:false});
+                                                            treeCombinationRoot.eachChild(function(item){
+                                                                item.updateInfo(true,{allowDrop:true, allowDrag:false});
+                                                            });
+                                                            combinations.setValue(Ext.JSON.encode(treeCombinationRoot.serialize()));
+                                                        }else{
+                                                            treeCombination.setRootNode({
+                                                                id:'root',
+                                                                title:'root',
+                                                                expanded: true,
+                                                                allowDrop:false,
+                                                                allowDrag:false
+                                                            });
+                                                        }
+                                                    }
+
                                                     Ext.create('Xnfy.util.common').uxNotification(true,'获取数据成功');
                                                     self.up('form').setLoading(false);
                                                 }else{
