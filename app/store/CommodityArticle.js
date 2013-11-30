@@ -43,51 +43,53 @@ Ext.define('Xnfy.store.CommodityArticle', {
                 beforeload: function(t){
                     var tab = Ext.getCmp("center").getActiveTab();
                     var tabpanelCenter = tab.queryById('tabpanelCenter');
-                    var ctab = tabpanelCenter.getActiveTab();
-                    var form = tab.child('form').getForm();
-                    var type = 0;
-                    var informations_ids = [];
-                    var videos_ids = [];
-                    if(ctab){
-                        switch(ctab.itemId){
-                            case 'aboutInformations':
-                                type = 1;
-                                var informations = form.findField('informations').getValue();
-                                if(informations){
-                                    var informations_result = Ext.JSON.decode(informations);
-                                    if(informations_result){
-                                        Ext.Array.forEach(informations_result,function(item,index){
-                                            informations_ids.push(item.id);
-                                        });
+                    if(tabpanelCenter){
+                        var ctab = tabpanelCenter.getActiveTab();
+                        var form = tab.child('form').getForm();
+                        var type = 0;
+                        var informations_ids = [];
+                        var videos_ids = [];
+                        if(ctab){
+                            switch(ctab.itemId){
+                                case 'aboutInformations':
+                                    type = 1;
+                                    var informations = form.findField('informations').getValue();
+                                    if(informations){
+                                        var informations_result = Ext.JSON.decode(informations);
+                                        if(informations_result){
+                                            Ext.Array.forEach(informations_result,function(item,index){
+                                                informations_ids.push(item.id);
+                                            });
+                                        }
                                     }
-                                }
-                                if(informations_ids.length>0){
-                                    informations_ids = informations_ids.toString();
-                                }
-                            break;
-                            case 'aboutVideos':
-                                type = 2;
-                                var videos = form.findField('videos').getValue();
-                                if(videos){
-                                    var videos_result = Ext.JSON.decode(videos);
-                                    if(videos_result){
-                                        Ext.Array.forEach(videos_result,function(item,index){
-                                            videos_ids.push(item.id);
-                                        });
+                                    if(informations_ids.length>0){
+                                        informations_ids = informations_ids.toString();
                                     }
-                                }
-                                if(videos_ids.length>0){
-                                    videos_ids = videos_ids.toString();
-                                }
-                            break;
-                        }
+                                break;
+                                case 'aboutVideos':
+                                    type = 2;
+                                    var videos = form.findField('videos').getValue();
+                                    if(videos){
+                                        var videos_result = Ext.JSON.decode(videos);
+                                        if(videos_result){
+                                            Ext.Array.forEach(videos_result,function(item,index){
+                                                videos_ids.push(item.id);
+                                            });
+                                        }
+                                    }
+                                    if(videos_ids.length>0){
+                                        videos_ids = videos_ids.toString();
+                                    }
+                                break;
+                            }
 
-                        pid = [];
-                        if(tab.relationPid){
-                            pid = tab.relationPid;
-                        }
+                            pid = [];
+                            if(tab.relationPid){
+                                pid = tab.relationPid;
+                            }
 
-                        Ext.apply(t.proxy.extraParams, { type:type, pid: pid, informations_ids:informations_ids, videos_ids:videos_ids});
+                            Ext.apply(t.proxy.extraParams, { type:type, pid: pid, informations_ids:informations_ids, videos_ids:videos_ids});
+                        }
                     }
                 }
             }
