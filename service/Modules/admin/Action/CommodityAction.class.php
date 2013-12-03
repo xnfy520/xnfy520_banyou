@@ -7,6 +7,11 @@ class CommodityAction extends CommonAction {
 
 		$MODULE_NAME = D(MODULE_NAME);
 
+
+		if(isset($_GET['pid']) && $_GET['pid']!=''){
+			$search['pid'] = $_GET['pid'];
+		}
+		
 		if(isset($_GET['category']) && $_GET['category']!=''){
 			$search['category'] = $_GET['category'];
 		}
@@ -125,8 +130,21 @@ class CommodityAction extends CommonAction {
 	function insert(){
 		$MODULE_NAME = D(MODULE_NAME);
 		if($data = $MODULE_NAME->create()){
+			$name_exist = $MODULE_NAME->where('name<>"" AND name="'.$_POST['name'].'"')->count();
 			$title_exist = $MODULE_NAME->where('title<>"" AND title="'.$_POST['title'].'"')->count();
-            if($title_exist>0){
+			if($name_exist>0 && $title_exist>0){
+				echo json_encode(array(
+                            "success"=>false,
+                            "errors"=>array("msg"=>"商品名称和商品标题已经存在")
+                    ));
+                    return;
+			}else if($name_exist>0){
+				echo json_encode(array(
+                            "success"=>false,
+                            "errors"=>array("msg"=>"商品名称已经存在")
+                    ));
+                    return;
+			}else if($title_exist>0){
                     echo json_encode(array(
                             "success"=>false,
                             "errors"=>array("msg"=>"商品标题已经存在")

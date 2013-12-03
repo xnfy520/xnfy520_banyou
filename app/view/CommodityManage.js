@@ -18,45 +18,70 @@ Ext.define('Xnfy.view.CommodityManage', {
                         {
                             xtype: 'gridpanel',
                             selType:'checkboxmodel',
+                            features: [{
+                                ftype:'grouping',
+                                groupHeaderTpl: '商品: {name} ( {rows.length} )',
+                                hideGroupedHeader: true,
+                                startCollapsed: false,
+                                enableGroupingMenu:false
+                            }],
                             selModel: {
                                 injectCheckbox:'last'
                             },
-                            viewConfig: {
-                                // stripeRows: false
-                            },
+                            // viewConfig: {
+                            //     // stripeRows: false
+                            // },
                             border:false,
+                            store: Ext.create('Xnfy.store.CommodityList'),
                             columns: [
                                 {
                                     text: '#',
                                     dataIndex: 'id',
                                     width:60,
-                                    hidden:true
-                                },{
+                                    hidden:true,
+                                    groupable:false
+                                },
+                                {
                                     text: '商品名称',
                                     dataIndex: 'name',
                                     width:150,
-                                    renderer:function(value,metaData,record,rowIndex,colIndex,store,view){
-                                        var flag = record.data.master==1 ? ' <span class="icon-circle" style="float:right;color:red"></span>' : '';
-                                        return value+flag;
-                                    }
+                                    hidden:true,
+                                    groupable:false
                                 },
                                 {
                                     text: '商品标题',
                                     dataIndex: 'title',
-                                    flex: 1
+                                    flex: 1,
+                                    groupable:false
+                                },
+                                {
+                                    text: '',
+                                    dataIndex: 'master',
+                                    width:50,
+                                    align:'center',
+                                    groupable:false,
+                                    renderer:function(value,metaData,record,rowIndex,colIndex,store,view){
+                                        value = (value==1) ? ' <span class="icon-circle" style="color:red"></span>' : '';
+                                        return value;
+                                    }
                                 },
                                 {
                                     text:'商品价格',
                                     dataIndex: 'selling_price',
                                     align:'right',
+                                    groupable:false,
+                                    filter: {type: 'numeric'},
                                     renderer:function(value,metaData,record,rowIndex,colIndex,store,view){
-                                        return '&yen; '+Ext.util.Format.number(value,'0,000.00');
+                                        if(value){
+                                            return '&yen; '+Ext.util.Format.number(value,'0,000.00');
+                                        }
                                     }
                                 },
                                 {
                                     text: '启用',
                                     dataIndex: 'enabled',
                                     align:'center',
+                                    groupable:false,
                                     renderer:function(value){
                                         if(value){
                                             if(value==1){
@@ -74,6 +99,7 @@ Ext.define('Xnfy.view.CommodityManage', {
                                     hidden:true,
                                     xtype: 'datecolumn',
                                     width:150,
+                                    groupable:false,
                                     renderer:function(value){
                                         if(value){
                                             var v = Ext.util.Format.date(new Date(parseInt(value,0)*1000),"Y-m-d H:i:s");
@@ -87,6 +113,7 @@ Ext.define('Xnfy.view.CommodityManage', {
                                     text: '修改时间',
                                     dataIndex: 'modify_date',
                                     hidden:true,
+                                    groupable:false,
                                     align:'center',
                                     xtype: 'datecolumn',
                                     width:150,
@@ -122,7 +149,9 @@ Ext.define('Xnfy.view.CommodityManage', {
                                                  },
                                                  listeners:{
                                                      beforeload: function(t){
-                                                        Ext.apply(this.proxy.extraParams, { category: me.data.id});
+                                                        if(me.data){
+                                                            Ext.apply(this.proxy.extraParams, { category: me.data.id});
+                                                        }
                                                      }
                                                  }
                                             }),

@@ -522,10 +522,6 @@ Ext.define('Xnfy.controller.ClassifyMenu', {
         }
     },
     openCommodityManage : function(panel,id,obj){
-        // var n = (typeof panel == "string" ? panel : id || panel.id);
-        // var n = obj.id;
-        // console.log(n);
-        // console.log(obj);
         var n = 'Commodity-List-'+obj.internalId;
         var center = Ext.getCmp("center");
         var tab = center.getComponent(n);
@@ -536,10 +532,8 @@ Ext.define('Xnfy.controller.ClassifyMenu', {
             panel.data = obj.raw;
             var gridpanel = panel.child('gridpanel');
             var pagingtoolbar = gridpanel.getDockedItems('pagingtoolbar')[0];
-            var stores = Ext.create('Xnfy.store.CommodityList');
-            var store = stores.load({scope:this,params:{category:obj.internalId},callback:function(records,operation,success){
+            var store = gridpanel.getStore().load({scope:this,params:{category:obj.internalId},callback:function(records,operation,success){
             }});
-            gridpanel.reconfigure(store);
             pagingtoolbar.bindStore(store);
             center.setActiveTab(center.add(panel));
         }

@@ -6,6 +6,8 @@ Ext.define('Xnfy.store.CommodityList', {
     model: 'Xnfy.model.CommodityList',
     storeId: 'CommodityList',
     sorters:[{property:'id',direction:'DESC'}],
+    groupers:[{property:'name',direction:'ASC'},{property:'master',direction:'DESC'}],
+    groupField: 'name',
     constructor: function(cfg) {
         var me = this;
         cfg = cfg || {};

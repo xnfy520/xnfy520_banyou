@@ -483,7 +483,7 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                         items: []
                     },{
                         title: '库存状态',
-                         xtype:'treepanel',
+                        xtype:'treepanel',
                         itemId:'commodityInventory',
                         rootVisible: false,
                         useArrows:true,
