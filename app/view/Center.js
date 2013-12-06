@@ -11,6 +11,8 @@ Ext.define('Xnfy.view.Center', {
                 {
                     xtype: 'panel',
                     title: '首页'
+                    // html:'<img style="width:100%" src="public/images/ls.jpg" />'
+                    // bodyStyle:'background:url(public/images/ls2.jpg) no-repeat center center'
                 }
             ]
         });

@@ -4,7 +4,24 @@
 
 		function _initialize(){
 			header("Content-Type:text/html;Charset=utf-8;");
+			
 			//unset($_SESSION['admin@']);
+		}
+
+		function CommodityImageManage($files, $dir = ''){
+			$tmp = 'upload/tmp/';
+			$path = 'upload/commodity/';
+			$dirs = array('cover', 'list', 'details');
+			if(empty($dir)){
+				$dest = $tmp;
+			}else{
+				$dest = $path.$dirs[$dir];
+			}
+			if(file_exists($dest, 0777, true)){
+				
+			}else{
+				mkdir($path);
+			}
 		}
 
 		function verify(){

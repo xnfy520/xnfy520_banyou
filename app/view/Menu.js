@@ -62,12 +62,12 @@ Ext.define('Xnfy.view.Menu', {
                         id: 'root',
                         expanded:true,
                         children:[
-                            // {
-                            //     id:'FileManage',
-                            //     disabled:false,
-                            //     leaf: true,
-                            //     text:'文件管理'
-                            // },
+                            {
+                                id:'FileManage',
+                                disabled:false,
+                                leaf: true,
+                                text:'文件管理'
+                            },
                             {
                                 id:'FileManager',
                                 leaf: true,

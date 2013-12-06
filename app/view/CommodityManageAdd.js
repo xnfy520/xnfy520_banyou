@@ -2,7 +2,10 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
     extend: 'Ext.panel.Panel',
     requires: [
         'Ext.ux.ProgressBarPager',
-        'Xnfy.util.common'
+        'Xnfy.util.common',
+        'Ext.ux.DataView.Draggable',
+        'Ext.ux.DataView.DragSelector',
+        'Ext.ux.DataView.Animated'
     ],
     alias: 'widget.commoditymanageadd',
     title: 'Tab',
@@ -479,8 +482,333 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                             }
                     },{
                         title:'图片列表',
-                        layout: 'fit',
-                        items: []
+                        layout: 'border',
+                        xtype:'panel',
+                        itemId:'abcddd',
+                        hideMode:'offsets',
+                        listeners:{
+                        },
+                        // bodyStyle:'background:white;',
+                        margin:'-5 -5 -5 -5',
+                        items: [
+                            Ext.create('Ext.ux.uploadPanel',{
+                                region: 'center',
+                                title : '文件上传',
+                                itemId:'commodityUpload',
+                                header:false,
+                                style: {
+                                    borderStyle: 'solid',
+                                    borderWidth:"0 5px 0 0",
+                                    borderColor:"#ADD2ED"
+                                },
+                                // viewConfig: {
+                                //     stripeRows: false,
+                                //     plugins: {
+                                //         ptype: 'gridviewdragdrop'
+                                //     },
+                                //     listeners: {
+                                //         drop: function(node, data, dropRec, dropPosition) {
+                                //         }
+                                //     }
+                                // },
+                                // split: true,
+                                // style:'border-right:5px solid #ADD2ED',
+                                // collapsible:true,
+                                // collapseDirection:'right',
+                                // height:100,
+                                // flex: 0.7,
+                               // addFileBtnText : '选择文件...',
+                               // uploadBtnText : '上传',
+                               // removeBtnText : '移除所有',
+                               // cancelBtnText : '取消上传',
+                               // file_size_limit : 10000,//MB
+                               upload_url : 'admin/common/upload',
+                               store : Ext.create('Ext.data.JsonStore',{
+                                    fields : ['id','name','type','size','percent','status','fileName'],
+                                    listeners:{
+                                        add: function(store, records, index){
+                                        },
+                                        datachanged:function(){
+                                            // var upload = me.queryById('commodityUpload');
+                                            // upload.getView().refresh();
+                                        },
+                                        update:function(self, record){
+                                            if(record.data.status==-4 && record.data.percent==100){
+                                                var list = me.queryById('commodityImageList');
+                                                var listStore = list.getStore();
+                                                if(record.data.serverData){
+                                                    console.log(record.data.serverData);
+                                                    var saveData = {
+                                                        name: record.data.serverData.savename,
+                                                        dir: '', //me.dirname,
+                                                        size: record.data.serverData.size,
+                                                        tip: record.data.serverData.key
+                                                    };
+                                                    listStore.add(saveData);
+                                                    console.log(listStore);
+                                                    self.remove(record);
+                                                }
+                                            }
+                                        }
+                                    }
+                                })
+                            }),
+                            {
+                                xtype: 'gridpanel',
+                                itemId: 'commodityImageList',
+                                region: 'east',
+                                title: '图片列表',
+                                width:250,
+                                header:false,
+                                multiSelect: true,
+                                listeners:{
+                                    'itemcontextmenu' : function(menutree, selected, items, index, e) {
+                                        var nodemenu = new Ext.menu.Menu({});
+                                        e.preventDefault();
+                                        e.stopEvent();
+                                        nodemenu = new Ext.menu.Menu({
+                                            floating : true,
+                                            items : [{
+                                                text : "移除所选项",
+                                                handler : function(self) {
+                                                    var result = menutree.getSelectionModel().getSelection();
+                                                    if(result.length>0){
+                                                        menutree.getStore().remove(result);
+                                                    }
+                                                }
+                                            }]
+                                        });
+                                        nodemenu.showAt(e.getXY());
+                                    }
+                                },
+                                plugins: [
+                                    Ext.create('Ext.grid.plugin.CellEditing', {
+                                        clicksToEdit: 1,
+                                        listeners : {
+                                            beforeedit : function(e,obj) {
+                                            },
+                                            edit:function(editor, context){
+                                                var form = me.child('form').getForm();
+                                                var images = form.findField('images');
+                                                var result = [];
+                                                if(context.store.data.items.length>0){
+                                                    Ext.Array.forEach(context.store.data.items, function(item, index){
+                                                        var saveData = {
+                                                            name: item.data.name,
+                                                            dir: item.data.dir,
+                                                            size: item.data.size,
+                                                            tip: item.data.tip
+                                                        };
+                                                        result.push(saveData);
+                                                    });
+                                                    if(result.length>0){
+                                                        images.setValue(Ext.JSON.encode(result));
+                                                    }else{
+                                                        images.setValue('');
+                                                    }
+                                                }
+                                                // context.record.commit();
+                                            }
+                                        }
+                                    })
+                                ],
+                                viewConfig: {
+                                    stripeRows: false,
+                                    plugins: {
+                                        ptype: 'gridviewdragdrop'
+                                    },
+                                    listeners: {
+                                        drop: function(node, data, dropRec, dropPosition) {
+                                        }
+                                    }
+                                },
+                                store: Ext.create('Ext.data.Store', {
+                                    fields:['name', 'dir', 'size', 'tip'],
+                                    proxy: {
+                                        type: 'memory',
+                                        reader: {
+                                            type: 'json',
+                                            root: 'data'
+                                        }
+                                    },
+                                    listeners:{
+                                        datachanged:function(self){
+                                            me.queryById('commodity_images_count').setValue(self.getCount());
+                                            var form = me.child('form').getForm();
+                                            var images = form.findField('images');
+                                            var result = [];
+                                            if(self.data.items.length>0){
+                                                Ext.Array.forEach(self.data.items, function(item, index){
+                                                    var saveData = {
+                                                        name: item.data.name,
+                                                        dir: me.dirname,
+                                                        size: item.data.size,
+                                                        tip: item.data.tip
+                                                    };
+                                                    result.push(saveData);
+                                                });
+                                                if(result.length>0){
+                                                    images.setValue(Ext.JSON.encode(result));
+                                                }else{
+                                                    images.setValue('');
+                                                }
+                                            }else{
+                                                images.setValue('');
+                                            }
+                                        }
+                                    }
+                                }),
+                                columns: [
+                                    // {
+                                    //     text: '#',
+                                    //     dataIndex: 'id',
+                                    //     width:50,
+                                    //     hidden:true,
+                                    //     resizable:false,
+                                    //     sortable:false
+                                    // },
+                                    {
+                                        text:'',
+                                        width:45,
+                                        dataIndex: 'name',
+                                        resizable:false,
+                                        sortable:false,
+                                        renderer:function(value,metaData,record,rowIndex,colIndex,store,view){
+                                            console.log(record);
+                                            var vv = Ext.util.Format.stripTags(value);
+                                            var path = 'upload/tmp/'+vv;
+                                            if(record.data.dir!=''){
+                                                path = 'upload/commodity/'+record.data.dir+'/'+vv;
+                                            }
+                                            metaData.tdAttr = 'data-qtip="<img style=max-width:200px src='+path+' />"';
+                                            metaData.style = "position: absolute;";
+                                            var v = '<img style="max-height: 20px;max-width:30px;position: relative;top: -3px;" src="'+path+'" />';
+                                            return v;
+                                        }
+                                    },
+                                    {
+                                        text:'图片信息',
+                                        dataIndex: 'tip',
+                                        editor: {xtype: 'textfield'},
+                                        resizable:false,
+                                        sortable:false,
+                                        flex: 1,
+                                        listenders:{
+                                            render:function(self){
+                                            }
+                                        }
+                                    }
+                                ],
+                                dockedItems: [{
+                                    xtype: 'toolbar',
+                                    items: [
+                                    {
+                                        xtype: 'displayfield',
+                                        hidden: false,
+                                        labelSeparator:'',
+                                        fieldLabel: '图片列表',
+                                        labelWidth:60,
+                                        labelStyle:'font-weight:bold'
+                                    },'->',{
+                                        xtype: 'displayfield',
+                                        itemId:'commodity_images_count',
+                                        value: 0,
+                                        renderer:function(value){
+                                            if(value){
+                                                return '<i>共 '+value+' 项</i>';
+                                            }
+                                        }
+                                    }]
+                                }]
+                            }
+                           // {
+                           //      xtype:'dataview',
+                           //      style:'background:white',
+                           //      region: 'center',
+                           //      disableSelection:false,
+                           //      plugins : [
+                           //          // Ext.create('Ext.ux.DataView.Draggable', {
+                           //          // }),
+                           //          Ext.create('Ext.ux.DataView.DragSelector', {
+                           //          })
+                           //      ],
+                           //      flex: 0.3,
+                           //      itemSelector: 'div.commodityImage',
+                           //      // overItemCls : 'phone-hover',
+                           //      multiSelect : true,
+                           //      autoScroll:true,
+                           //      trackOver: true,
+                           //      listeners:{
+                           //          'afterrender': function(self){
+                           //              Ext.create('Ext.view.DragZone', {
+                           //                  view: self,
+                           //                  ddGroup: 'commodityImage',
+                           //                  dragText: 'test'
+                           //              });
+                           //              Ext.create('Ext.view.DropZone', {
+                           //                  view: self,
+                           //                  ddGroup: 'commodityImage',
+                           //                  handleNodeDrop : function(data, record, position) {
+                           //                      var view = self,
+                           //                          store = view.getStore(),
+                           //                          index, records, i, len;
+                           //                      if (data.copy) {
+                           //                          records = data.records;
+                           //                          data.records = [];
+                           //                          for (i = 0, len = records.length; i < len; i++) {
+                           //                              data.records.push(records[i].copy(records[i].getId()));
+                           //                          }
+                           //                      } else {
+                           //                          data.view.store.remove(data.records, data.view === view);
+                           //                      }
+                           //                      index = store.indexOf(record);
+                           //                      if (position !== 'before') {
+                           //                          index++;
+                           //                      }
+                           //                      store.insert(index, data.records);
+                           //                      // view.getSelectionModel().select(data.records);
+                           //                  }
+                           //              });
+                           //          },
+                           //          'itemcontextmenu' : function(menutree, selected, items, index, e) {
+                           //              var nodemenu = new Ext.menu.Menu({});
+                           //              e.preventDefault();
+                           //              e.stopEvent();
+                           //              nodemenu = new Ext.menu.Menu({
+                           //                  floating : true,
+                           //                  items : [{
+                           //                      text : "移除所选项",
+                           //                      handler : function(self) {
+                           //                          menutree.getStore().remove(selected);
+                           //                      }
+                           //                  }]
+                           //              });
+                           //              nodemenu.showAt(e.getXY());
+                           //          }
+                           //      },
+                           //      store:Ext.create('Ext.data.Store', {
+                           //          fields: [
+                           //              { name:'src', type:'string' },
+                           //              { name:'caption', type:'string' }
+                           //          ],
+                           //          data: [
+                           //              { src:'http://www.sencha.com/img/20110215-feat-drawing.png', caption:'Drawing & Charts' },
+                           //              { src:'http://www.sencha.com/img/20110215-feat-data.png', caption:'Advanced Data' },
+                           //              { src:'http://www.sencha.com/img/20110215-feat-html5.png', caption:'Overhauled Theme' },
+                           //              { src:'http://www.sencha.com/img/20110215-feat-html5.png', caption:'Overhauled Theme' }
+                           //          ]
+                           //      }),
+                           //      tpl:new Ext.XTemplate(
+                           //          '<tpl for=".">',
+                           //              '<div style="margin: 5px;padding:5px;" class="commodityImage">',
+                           //                '<img style="width:100%" src="{src}" />',
+                           //                '<br/><span>{caption}</span>',
+                           //              '</div>',
+                           //          '</tpl>',
+                           //          '<div class="x-clear"></div>'
+                           //      )
+                           //  }
+                        ]
                     },{
                         title: '库存状态',
                         xtype:'treepanel',
@@ -994,7 +1322,7 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                             displayField:'title',
                             rootVisible: false,
                             // useArrows:true,
-                            style:'border-top:1px solid #C0C0C0;',
+                            // style:'border-top:1px solid #C0C0C0;',
                             hideHeaders: true,
                             columns: [{
                                 xtype: 'treecolumn',
@@ -1305,7 +1633,7 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                             displayField:'title',
                             rootVisible: false,
                             // useArrows:true,
-                            style:'border-top:1px solid #C0C0C0;',
+                            // style:'border-top:1px solid #C0C0C0;',
                             hideHeaders: true,
                             columns: [{
                                 xtype: 'treecolumn',
@@ -1843,6 +2171,11 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                 name: 'combinations',
                                 width: '100%',
                                 hidden: false
+                            },{
+                                xtype: 'textarea',
+                                name: 'images',
+                                width: '100%',
+                                hidden: false
                             }]
                     }]
                 }],
@@ -2221,6 +2554,11 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                 videos_store.removeAll();
                             }
 
+                            var images_store = me.queryById('commodityImageList').getStore();
+                            if(images_store){
+                                images_store.removeAll();
+                            }
+
                             if(me.queryById('aboutInformationsType').getStore()){
                                 me.queryById('aboutInformationsType').getStore().reload({params:{type:1}});
                             }
@@ -2291,6 +2629,7 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                 var classify_values = commodity_classify.getValues(false,true);
                                 var values = form.getFieldValues(true);
                                 var params = {
+                                        dir: me.dir,
                                         district:datas.parent.id,
                                         category:datas.id,
                                         classifys:null
@@ -2348,6 +2687,10 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                             var videos_store = me.queryById('aboutVideosAdd').getStore();
                                             if(videos_store){
                                                 videos_store.removeAll();
+                                            }
+                                            var images_store = me.queryById('commodityImageList').getStore();
+                                            if(images_store){
+                                                images_store.removeAll();
                                             }
                                             if(me.queryById('aboutVideosType').getStore()){
                                                 me.queryById('aboutVideosType').getStore().reload({params:{type:2}});

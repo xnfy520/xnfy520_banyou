@@ -19,7 +19,7 @@ Ext.define('Xnfy.view.Main', {
                             callback:function(records, operation, success){
                                 var response = Ext.JSON.decode(success.responseText);
                                 if(response.success){
-                                    Ext.getCmp('admin@').setText(response.datas.username);
+                                    Ext.getCmp('admin@').setText('<strong style="color:#F8626C;font-size:14px">管理员：'+response.datas.username+'</strong>');
                                     Ext.Object.each(self.items.items,function(key,value,myself){
                                         value.show();
                                     });

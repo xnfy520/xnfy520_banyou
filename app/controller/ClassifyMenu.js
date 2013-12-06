@@ -320,6 +320,7 @@ Ext.define('Xnfy.controller.ClassifyMenu', {
                                         panel.setTitle('添加 '+selected.raw.text+'商品');
                                         panel.id = selected.raw.indexing+'-add-'+selected.raw.id;
                                         panel.data = selected.raw;
+                                        panel.dirname = Ext.Date.format(new Date(), 'time');
                                         center.setActiveTab(center.add(panel));
                                     }
                                 }

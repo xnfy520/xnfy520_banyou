@@ -1,9 +1,7 @@
 Ext.define('Ext.ux.uploadPanel',{
 	extend : 'Ext.grid.Panel',
-	frame:false,
-	alias : 'widget.uploadpanel',
-	width : 900,
-	height : 400,
+	width:'100%',
+	autoScroll:true,
 	selType:'checkboxmodel',
     selModel: {
         injectCheckbox:'last',
@@ -24,17 +22,19 @@ Ext.define('Ext.ux.uploadPanel',{
         })
     ],
 	columns : [
-        {xtype: 'rownumberer'},
+        {
+			xtype: 'rownumberer'
+		},
 		{text: '原文件名',dataIndex: 'name',flex: 1,sortable:false},
-		{text: '自定义文件名',flex: 1,dataIndex: 'fileName',editor: {xtype: 'textfield',disabled:false},sortable:false},
-        {text: '类型', width: 70,dataIndex: 'type',sortable:false,hidden:true},
-        {text: '大小', width: 70,dataIndex: 'size',sortable:false,renderer:function(v){
+		{text: '自定义文件名',flex: 1,dataIndex: 'fileName',editor: {xtype: 'textfield',disabled:false},sortable:false,hidden:true},
+        {text: '类型', width: 100,dataIndex: 'type',sortable:false,hidden:true},
+        {text: '大小', width: 80,dataIndex: 'size',sortable:false,align:'right',renderer:function(v){
 			return Ext.util.Format.fileSize(v);
         }},
-        {text: '进度', width: 130,dataIndex: 'percent',sortable:false,renderer:function(v){
+        {text: '进度', width: 120,dataIndex: 'percent',sortable:false,renderer:function(v){
 			var html =
 				'<div>'+
-					'<div style="border:1px solid #3892D3;height:10px;width:115px;margin:2px 0px 1px 0px;float:left;">'+
+					'<div style="border:1px solid #3892D3;height:10px;width:100px;margin:2px 0px 1px 0px;float:left;">'+
 						'<div style="float:left;background:#3892D3;width:'+v+'%;height:8px;">'+
 							'<div></div>'+
 						'</div>'+
@@ -301,7 +301,7 @@ Ext.define('Ext.ux.uploadPanel',{
 		var rec = me.store.getById(file.id);
 		rec.set('percent', percent);
 		rec.set('status', file.filestatus);
-		rec.commit();
+		// rec.commit();
 	},
 	upload_error_handler : function(file, errorCode, message){ //上传文件失败
 		console.log('upload_error_handler');
@@ -309,15 +309,17 @@ Ext.define('Ext.ux.uploadPanel',{
 		var rec = me.store.getById(file.id);
 		rec.set('percent', 0);
 		rec.set('status', file.filestatus);
-		rec.commit();
+		// rec.commit();
 	},
 	upload_success_handler : function(file, serverData, responseReceived){ //上传文件成功
 		console.log('8.upload_success_handler');
 		var me = this.settings.custom_settings.scope_handler;
 		var rec = me.store.getById(file.id);
-		if(Ext.JSON.decode(serverData).status){
+		var svData = Ext.JSON.decode(serverData);
+		if(svData.status){
 			rec.set('percent', 100);
 			rec.set('status', file.filestatus);
+			rec.set('serverData', svData.data);
 		}else{
 			rec.set('percent', 0);
 			rec.set('status', SWFUpload.FILE_STATUS.ERROR);

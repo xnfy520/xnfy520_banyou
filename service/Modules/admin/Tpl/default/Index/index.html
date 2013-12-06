@@ -7,16 +7,47 @@
     <link rel="stylesheet" href="public/extjs/resources/ext-theme-neptune/ext-theme-neptune-all.css">
     <style>
 		.x-btn-icon-el{
-			font-size:16px;
+			font-size:15px;
+            color:#666;
 			text-indent:2px;
 		}
+        .icon-signout{
+            color:red;
+            font-size:14px;
+            /*font-size:px;*/
+        },
+        .icon-home{
+            font-size:20px;
+        }
        /* #instructions ul li {
             list-style-type:disc;
             list-style-position:outside;
             font-size:12px;
             /*margin:0px 0px 0px 20px;*/
         }*/
-
+        .phone-hover{
+            background-color: #eee;
+            border:5px solid red;
+        }
+        .x-item-selected {
+            background-color: #D3E1F1 !important;
+        }
+.x-view-selector {
+    position:absolute;
+    left:0;
+    top:0;
+    width:0;
+    border:1px dotted;
+    opacity: .5;
+    -moz-opacity: .5;
+    filter:alpha(opacity=50);
+    zoom:1;
+    background-color:#c3daf9;
+    border-color:#3399bb;
+}.ext-strict .ext-ie .x-tree .x-panel-bwrap{
+    position:relative;
+    overflow:hidden;
+}
         /* Icons */
         .ux-notification-icon-information {
             /*background-image: url('./public/images/icon16_info.png');*/

@@ -20,7 +20,7 @@ Ext.define('Xnfy.view.CommodityManage', {
                             selType:'checkboxmodel',
                             features: [{
                                 ftype:'grouping',
-                                groupHeaderTpl: '商品: {name} ( {rows.length} )',
+                                groupHeaderTpl: '商品: <strong style="color:red">{name}</strong> ( {rows.length} )',
                                 hideGroupedHeader: true,
                                 startCollapsed: false,
                                 enableGroupingMenu:false
@@ -28,9 +28,9 @@ Ext.define('Xnfy.view.CommodityManage', {
                             selModel: {
                                 injectCheckbox:'last'
                             },
-                            // viewConfig: {
-                            //     // stripeRows: false
-                            // },
+                            viewConfig: {
+                                stripeRows: true
+                            },
                             border:false,
                             store: Ext.create('Xnfy.store.CommodityList'),
                             columns: [

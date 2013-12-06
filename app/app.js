@@ -27,6 +27,7 @@ Ext.application({
     autoCreateViewport: true,
     name: 'Xnfy'
 });
+Ext.QuickTips.init();
 Ext.grid.RowEditor.prototype.saveBtnText = "保存";
 Ext.grid.RowEditor.prototype.cancelBtnText = '取消';
 
