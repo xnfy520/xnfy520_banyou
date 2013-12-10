@@ -61,6 +61,22 @@ class CommodityAction extends CommonAction {
 			if($classifys){
 				$data = array_merge($data,$classifys);
 			}
+			$images = json_decode($data['images'],true);
+			if(count($images)>0){
+				$tmpDir = 'upload/tmp/';
+				$destDir = 'upload/commodity/'.$_POST['id'].'/list/';
+				foreach($images as $key=>$value){
+					if(!file_exists($tmpDir.$value['name']) && file_exists($destDir.$value['name'])){
+						copy($destDir.$value['name'],$tmpDir.$value['name']);
+					}
+					if(!file_exists($tmpDir.'min_'.$value['name']) && file_exists($destDir.'min_'.$value['name'])){
+						copy($destDir.'min_'.$value['name'],$tmpDir.'min_'.$value['name']);
+					}
+					if(!file_exists($tmpDir.'cut_'.$value['name']) && file_exists($destDir.'cut_'.$value['name'])){
+						copy($destDir.'cut_'.$value['name'],$tmpDir.'cut_'.$value['name']);
+					}
+				}
+			}
 			if(empty($data['brand'])){
 				unset($data['brand']);
 			}
@@ -130,8 +146,12 @@ class CommodityAction extends CommonAction {
 	function insert(){
 		$MODULE_NAME = D(MODULE_NAME);
 		if($data = $MODULE_NAME->create()){
-			$name_exist = $MODULE_NAME->where('name<>"" AND name="'.$_POST['name'].'"')->count();
-			$title_exist = $MODULE_NAME->where('title<>"" AND title="'.$_POST['title'].'"')->count();
+			if($data['master']==1){
+				$name_exist = $MODULE_NAME->where('name<>"" AND name="'.$_POST['name'].'"')->count();
+				$title_exist = $MODULE_NAME->where('title<>"" AND title="'.$_POST['title'].'"')->count();
+			}else{
+				$title_exist = $MODULE_NAME->where('title<>"" AND title="'.$_POST['title'].'"')->count();
+			}
 			if($name_exist>0 && $title_exist>0){
 				echo json_encode(array(
                             "success"=>false,
@@ -154,6 +174,23 @@ class CommodityAction extends CommonAction {
 			$data['create_date'] = time();
 			if($id = $MODULE_NAME->add($data)){
 				$data['id'] = $id;
+				if($data['master']==0 && $data['pid']!=''){
+					$master = true;
+				}else{
+					$master = false;
+				}
+				$images = json_decode($data['images'],true);
+				if(count($images)>0){
+				//if(count($images)>0 && !empty($data['dir'])){
+					$this->CommodityFileManages('list',$images, $id);
+				}
+				if(!empty($data['cover'])){
+					$this->CommodityFileManages('cover',$data['cover'], $id);
+				}
+				// $details_image_list = json_decode($data['details_image_list'],true);
+				// if(count($details_image_list)>0){
+				// 	$this->CommodityFileManages('details',$details_image_list, $id);
+				// }
 				echo json_encode(array(
 						"success"=>true,
 						"data"=>$data

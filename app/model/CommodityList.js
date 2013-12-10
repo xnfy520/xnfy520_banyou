@@ -10,6 +10,7 @@ Ext.define('Xnfy.model.CommodityList', {
 		'market_price',
 		'selling_price',
 		'enabled',
+		'sort',
 		'cover',
 		'master',
 		'create_date',

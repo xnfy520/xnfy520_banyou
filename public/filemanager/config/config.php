@@ -1,6 +1,7 @@
 <?php
+error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
 session_start();
-mb_internal_encoding('UTF-8');
+// mb_internal_encoding('UTF-8');
 //------------------------------------------------------------------------------
 // DON'T COPY THIS VARIABLES IN FOLDERS config.php FILES
 //------------------------------------------------------------------------------

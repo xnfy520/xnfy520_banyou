@@ -20,7 +20,7 @@ Ext.define('Xnfy.view.CommodityManage', {
                             selType:'checkboxmodel',
                             features: [{
                                 ftype:'grouping',
-                                groupHeaderTpl: '商品: <strong style="color:red">{name}</strong> ( {rows.length} )',
+                                groupHeaderTpl: '商品: <strong style="color:#157FCC">{name}</strong> <i>( {rows.length} )</i>',
                                 hideGroupedHeader: true,
                                 startCollapsed: false,
                                 enableGroupingMenu:false
@@ -61,8 +61,14 @@ Ext.define('Xnfy.view.CommodityManage', {
                                     align:'center',
                                     groupable:false,
                                     renderer:function(value,metaData,record,rowIndex,colIndex,store,view){
-                                        value = (value==1) ? ' <span class="icon-circle" style="color:red"></span>' : '';
-                                        return value;
+                                        var i;
+                                        if(value==1){
+                                            i = '<img src="public/images/online.png" />';
+                                        }else{
+                                            i = '<img src="public/images/offline.png" />';
+                                        }
+                                        // value = (value==1) ? ' <span class="icon-circle" style="color:red"></span>' : '';
+                                        return i;
                                     }
                                 },
                                 {
@@ -80,6 +86,7 @@ Ext.define('Xnfy.view.CommodityManage', {
                                 {
                                     text: '启用',
                                     dataIndex: 'enabled',
+                                    width:70,
                                     align:'center',
                                     groupable:false,
                                     renderer:function(value){
@@ -91,6 +98,12 @@ Ext.define('Xnfy.view.CommodityManage', {
                                             }
                                         }
                                     }
+                                },{
+                                    text: '排序',
+                                    dataIndex: 'sort',
+                                    width:70,
+                                    align:'center',
+                                    groupable:false
                                 },
                                 {
                                     text: '创建时间',

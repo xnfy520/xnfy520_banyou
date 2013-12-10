@@ -2,6 +2,6 @@
 
 return array(
 
-	'lib_splitword_full'         =>COMMON_PATH.'lib_splitword_full.class.php',
+	'thumbLib'=>COMMON_PATH.'ThumbLib.inc.php',
 
 );

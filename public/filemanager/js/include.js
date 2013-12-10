@@ -478,7 +478,6 @@ function apply_img(file,external){
 		        image.setVisible(true);
 		        image_select_window.close();
         	}
-        	
         }else{
         	apply_any(path, file);
         }

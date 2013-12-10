@@ -181,7 +181,36 @@ Ext.define('Xnfy.view.ArticleList', {
                                             }else if(record.data.id<0){
                                                 self.up('gridpanel').getStore().reload({params:{pid:0}});
                                             }else{
-                                                self.up('gridpanel').getStore().reload({params:{pid:record.data.id}});
+                                                // self.up('gridpanel').getStore().reload({params:{pid:record.data.id}});
+                                                if(record.data.leaf || record.childNodes.length<=0){
+                                                    self.up('gridpanel').getStore().reload({params:{pid:record.data.id}});
+                                                }else{
+                                                    var datas = record.serialize();
+                                                    var pids = [];
+                                                    pids.push(record.data.id);
+                                                    if(datas.children && datas.children.length>0){
+                                                        Ext.Array.forEach(datas.children,function(items, indexs){
+                                                            if(items.leaf){
+                                                                pids.push(items.id);
+                                                            }else{
+                                                                if(items.children.length>0){
+                                                                     Ext.Array.forEach(items.children, function(itemx, indexx){
+                                                                        if(itemx.leaf){
+                                                                            pids.push(itemx.id);
+                                                                        }else{
+                                                                            if(itemx.children.length>0){
+                                                                                Ext.Array.forEach(itemx.children, function(item, index){
+                                                                                    pids.push(item.id);
+                                                                                });
+                                                                            }
+                                                                        }
+                                                                    });
+                                                                }
+                                                            }
+                                                        });
+                                                        self.up('gridpanel').getStore().reload({params:{pid:pids.toString()}});
+                                                    }
+                                                }
                                             }
                                         }
                                     }

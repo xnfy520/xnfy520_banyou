@@ -1,7 +1,5 @@
  <?php
-
 include('config/config.php');
-
 // $_SESSION["verify"]= "RESPONSIVEfilemanager";
 if(!$_SESSION["admin@"]) die('illegal access');
 

@@ -9,7 +9,8 @@ class ArticleAction extends CommonAction {
 		$MODULE_NAME = D(MODULE_NAME);
 
 		if(isset($_GET['pid']) && $_GET['pid']!=''){
-			$search['pid'] = $_GET['pid'];
+			//$search['pid'] = $_GET['pid'];
+			$search['pid']  = array('in',$_GET['pid']);
 		}
 
 		if(isset($_GET['query']) && !empty($_GET['query'])){

@@ -4,23 +4,80 @@
 
 		function _initialize(){
 			header("Content-Type:text/html;Charset=utf-8;");
-			
 			//unset($_SESSION['admin@']);
 		}
 
-		function CommodityImageManage($files, $dir = ''){
-			$tmp = 'upload/tmp/';
-			$path = 'upload/commodity/';
-			$dirs = array('cover', 'list', 'details');
-			if(empty($dir)){
-				$dest = $tmp;
-			}else{
-				$dest = $path.$dirs[$dir];
+		function CommodityFileManages($type='list', $files, $id=''){
+			import("thumbLib");
+			if(empty($files)){
+				return false;
 			}
-			if(file_exists($dest, 0777, true)){
-				
-			}else{
-				mkdir($path);
+			$tmpDir = 'upload/tmp/';
+			$destDir = 'upload/commodity/'.$id.'/'.$type.'/';
+			if(!file_exists($destDir)){ //存在目标目录
+				mkdir($destDir, 0777, true);
+			}
+			switch($type){
+				case 'list':
+					foreach($files as $key=>$value){ //遍历文件
+						if(file_exists($tmpDir.$value['name'])){ //否而在临时文件夹中存在文件
+							$thumb = PhpThumbFactory::create($tmpDir.$value['name']);
+							if($thumb){
+								if(file_exists($tmpDir.'min_'.$value['name'])){
+									rename($tmpDir.'min_'.$value['name'], $destDir.'min_'.$value['name']);
+								}else{
+									$thumb->resizePercent(50);
+									$thumb->save($destDir.'min_'.$value['name']);
+								}
+								if(file_exists($tmpDir.'cut_'.$value['name'])){
+									rename($tmpDir.'cut_'.$value['name'], $destDir.'cut_'.$value['name']);
+								}else{
+									$thumb->resizePercent(50);
+									$currentInfo = $thumb->getCurrentDimensions();
+									if($currentInfo['width']<200){
+										$thumb->cropFromCenter(150)->save($destDir.'cut_'.$value['name']);
+									}else{
+										$thumb->cropFromCenter(200)->save($destDir.'cut_'.$value['name']);
+									}
+								}
+							}
+							rename($tmpDir.$value['name'],$destDir.$value['name']);
+						}
+					}
+				break;
+				case 'cover':
+					$file = $tmpDir.$files;
+					if(file_exists($file)){
+						$thumb = PhpThumbFactory::create($file);
+						if($thumb){
+							if(file_exists($tmpDir.'min_'.$files)){
+								rename($tmpDir.'min_'.$files, $destDir.'min_'.$files);
+							}else{
+								$thumb->resizePercent(50);
+								$thumb->save($destDir.'min_'.$files);
+							}
+							if(file_exists($tmpDir.'cut_'.$files)){
+								rename($tmpDir.'cut_'.$files, $destDir.'cut_'.$files);
+							}else{
+								$thumb->resizePercent(50);
+								$currentInfo = $thumb->getCurrentDimensions();
+								if($currentInfo['width']<200){
+									$thumb->cropFromCenter(150)->save($destDir.'cut_'.$files);
+								}else{
+									$thumb->cropFromCenter(200)->save($destDir.'cut_'.$files);
+								}
+							}
+						}
+						rename($file,$destDir.$files);
+					}
+				break;
+				case 'details':
+					foreach($files as $key=>$value){ //遍历文件
+						if(file_exists($tmpDir.$value)){ //否而在临时文件夹中存在文件
+							rename($tmpDir.$value,$destDir.$value);
+						}
+					}
+				break;
 			}
 		}
 
@@ -155,35 +212,24 @@
 
 		function upload(){
 			import("ORG.Net.UploadFile");
-			$tmpDir = 'upload/tmp/';
-			$srcDir = 'uploads/attachments';
-			if(!file_exists($tmpDir)){
-				mkdir('upload/tmp',0777,true);
+			import("thumbLib");
+			$date = date('Ymd');
+			if(isset($_POST['details']) && !empty($_POST['details'])){
+				$tmpDir = 'upload/'.$_POST['details'].'/'.$date.'/';
+				if(!file_exists($tmpDir)){
+					mkdir($tmpDir,0777,true);
+				}
+			}else{
+				$tmpDir = 'upload/tmp/';
+				if(!file_exists($tmpDir)){
+					mkdir($tmpDir,0777,true);
+				}
 			}
 			$upload = new UploadFile();
 			$upload->savePath =  $tmpDir;
 			if($upload->upload()) {
 				$uploadInfo = $upload->getUploadFileInfo();
-				//dump($uploadInfo);
-				// if(isset($_POST['movedir']) && !empty($_POST['movedir'])){
-				// 	$flag = false;
-				// 	if(isset($_POST['rename']) && $_POST['rename']==1){
-				// 		if(copy($tmpDir.$uploadInfo[0]['savename'], $srcDir.$_POST['movedir'].$uploadInfo[0]['name'])){
-				// 			$flag = true;
-				// 		}else{
-				// 			$flag = false;
-				// 		}
-				// 	}else{
-				// 		if(copy($tmpDir.$uploadInfo[0]['savename'], $srcDir.$_POST['movedir'].$uploadInfo[0]['savename'])){
-				// 			$flag = true;
-				// 		}else{
-				// 			$flag = false;
-				// 		}
-				// 	}
-				// 	if($flag){
-				// 		unlink($tmpDir.$uploadInfo[0]['savename']);
-				// 	}
-				// }
+				$uploadInfo[0]['dir'] = $date;
 				echo json_encode(array('status'=>1,'info'=>'上传成功','data'=>$uploadInfo[0]));
 			}else{
 				echo json_encode(array('status'=>0,'info'=>$upload->getErrorMsg()));

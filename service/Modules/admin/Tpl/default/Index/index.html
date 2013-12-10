@@ -32,6 +32,11 @@
         .x-item-selected {
             background-color: #D3E1F1 !important;
         }
+       /* .swfupload{
+            position: relative;
+            top:-20px;
+            background: red;
+        }*/
 .x-view-selector {
     position:absolute;
     left:0;
@@ -87,6 +92,7 @@
 	</style>
 </head>
 <body>
+    <script src="public/jquery/jquery.min.js"></script>
     <script src="public/underscore/underscore-min.js"></script>
     <script src="public/extjs/ext-all-debug.js"></script>
     <script src="public/extjs/locale/ext-lang-zh_CN.js"></script>

@@ -56,7 +56,36 @@ Ext.define('Xnfy.store.LinkList', {
                             this.sort([{property:'id',direction:'ASC'},{property:'sort',direction:'ASC'}]);
                             tab.child('gridpanel').down('[dataIndex=sort]').setVisible(false);
                         }else{
-                            Ext.apply(this.proxy.extraParams, { pid: search_pid});
+                            var node = store.findChild('id',search_pid, true);
+                            if(node.data.leaf || node.childNodes.length<=0){
+                               Ext.apply(this.proxy.extraParams, { pid: search_pid});
+                            }else{
+                                var datas = node.serialize();
+                                var pids = [];
+                                pids.push(search_pid);
+                                if(datas.children.length>0){
+                                    Ext.Array.forEach(datas.children,function(items, indexs){
+                                        if(items.leaf){
+                                            pids.push(items.id);
+                                        }else{
+                                            if(items.children.length>0){
+                                                 Ext.Array.forEach(items.children, function(itemx, indexx){
+                                                    if(itemx.leaf){
+                                                        pids.push(itemx.id);
+                                                    }else{
+                                                        if(itemx.children.length>0){
+                                                            Ext.Array.forEach(itemx.children, function(item, index){
+                                                                pids.push(item.id);
+                                                            });
+                                                        }
+                                                    }
+                                                });
+                                            }
+                                        }
+                                    });
+                                }
+                                Ext.apply(this.proxy.extraParams, { pid: pids.toString()});
+                            }
                             this.sort([{property:'sort',direction:'ASC'},{property:'id',direction:'ASC'}]);
                             tab.child('gridpanel').down('[dataIndex=sort]').setVisible(true);
                         }

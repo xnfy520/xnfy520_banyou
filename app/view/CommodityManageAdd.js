@@ -5,7 +5,8 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
         'Xnfy.util.common',
         'Ext.ux.DataView.Draggable',
         'Ext.ux.DataView.DragSelector',
-        'Ext.ux.DataView.Animated'
+        'Ext.ux.DataView.Animated',
+        'Ext.ux.UploadButton'
     ],
     alias: 'widget.commoditymanageadd',
     title: 'Tab',
@@ -235,6 +236,47 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                             labelAlign: 'top',
                             labelStyle: 'font-weight:bold;padding-bottom:2px'
                         },
+                        dockedItems: [{
+                                xtype: 'toolbar',
+                                items: [
+                                    Ext.create('Ext.ux.UploadButton',{
+                                        text:'添加封面',
+                                        itemId: 'addCover',
+                                        upload_url : 'admin/common/upload',
+                                        file_size_limit:10,
+                                        file_upload_limit : 0,
+                                        file_queue_limit : 0,
+                                        file_types:'*.jpg;*.png;*.gif;',
+                                        multiple:false,
+                                        listeners:{
+                                            onSay:function(file, serverData){
+                                                var cover = me.queryById('cover');
+                                                var filed = me.queryById('cover_filed');
+                                                var serverDatas = Ext.JSON.decode(file.serverData);
+                                                var datas = serverDatas.data;
+                                                filed.setValue(datas.savename);
+                                                cover.setSrc(datas.savepath+datas.savename);
+                                                cover.setVisible(true);
+                                            }
+                                        }
+                                    }),
+                                    {
+                                        xtype: 'button',
+                                        itemId: 'removeCover',
+                                        text: '删除封面',
+                                        hidden: true,
+                                        listeners:{
+                                            click: function(self){
+                                                var cover = me.queryById('cover');
+                                                cover.setSrc('');
+                                                cover.setVisible(false);
+                                                var filed = me.queryById('cover_filed');
+                                                filed.setValue('');
+                                            }
+                                        }
+                                    }
+                                ]
+                        }],
                         items: [{
                             xtype:'hiddenfield',
                             // xtype:'textfield',
@@ -244,100 +286,112 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                             // hidden:true,
                             labelAlign: 'top',
                             anchor:'100%',
-                            labelStyle: 'font-weight:bold;padding-bottom:5px'
-                        },{
-                            xtype: 'combobox',
-                            name:'combobox_image',
-                            labelAlign: 'top',
-                            anchor:'100%',
-                            allowBlank: false,
-                            hideLabel:true,
-                            fieldLabel:'封面图片',
-                            emptyText : '选择封面',
-                            mode : 'local',// 数据模式，local代表本地数据
-                            //readOnly : false,// 是否只读
-                            editable : false,// 是否允许输入
-                            //forceSelection : true,// 必须选择一个选项
-                            //blankText : '请选择',// 该项如果没有选择，则提示错误信息,
                             labelStyle: 'font-weight:bold;padding-bottom:5px',
-                            store:Ext.create('Ext.data.Store', {
-                                fields: ['text', 'selected_image'],
-                                data : [
-                                    {"text":"无封面", "selected_image":0},
-                                    {"text":"选择封面", "selected_image":1}
-                                ]
-                            }),
-                            value:0,
-                            displayField:'text',
-                            valueField:'selected_image',
-                            listConfig: {
-                                listeners: {
-                                    itemclick: function(list, record, eml, index,a,b) {
-                                        if(index==1){
-                                            var random = Ext.Date.format(new Date(),'timestamp');
-                                            var iframeid = "iframe-filemanager-"+random;
-                                            var imgwindow = "select-image-window";
-                                            Ext.create('Ext.window.Window', {
-                                                id:imgwindow,
-                                                title: '选择图片',
-                                                custom_variables:{image_id:'cover',filed_id:'cover_filed'},
-                                                maximizable:false,
-                                                resizable:false,
-                                                modal:true,
-                                                constrain: true,
-                                                width:300,
-                                                height:580,
-                                                html:'<iframe id="'+iframeid+'" style="width:100%;height:100%;border:0" src="public/filemanager/dialog.php?type=1&random="'+Math.random()+'></iframe>',
-                                                closable: true,
-                                                style: {
-                                                    borderStyle: '0 solid #fff'
-                                                },
-                                                listeners:{
-                                                    scope:this,
-                                                    close:function(self){
-                                                        if(this.up('form').getForm().findField('cover').value==''){
-                                                            this.up('form').getForm().findField('combobox_image').setValue(0);
-                                                        }
-                                                    },
-                                                    afterrender:function(self){
-                                                        self.setLoading(true);
-                                                        subWin = window.frames[iframeid];
-                                                        if (window.attachEvent) {
-                                                            subWin.attachEvent("onload", function(){
-                                                            });
-                                                        }else {
-                                                            subWin.addEventListener("load", function(){
-                                                                self.setLoading(false);
-                                                            }, true);
-                                                        }
-                                                    }
-                                                }
-                                            }).show();
-                                        }else{
-                                            this.up('form').getForm().findField('cover').setValue('');
-                                        }
-                                    }
-                                }
-                            },
-                            listeners: {
-                                scope: this,
-                                change:function(combo,n,o){
-                                    if(n==0){
-                                        var img_cover = combo.up('form').queryById('cover');
-                                        img_cover.setSrc('');
-                                        img_cover.setVisible(false);
-                                        combo.setValue(combo.store.getAt(0));
+                            listeners:{
+                                change: function(self, newValue, oldValue, eOpts){
+                                    var removeCover = me.queryById('removeCover');
+                                    if(newValue){
+                                        removeCover.setVisible(true);
                                     }else{
-                                        combo.setValue(combo.store.getAt(1));
+                                        removeCover.setVisible(false);
                                     }
                                 }
                             }
                         },
+                        // {
+                        //     xtype: 'combobox',
+                        //     name:'combobox_image',
+                        //     labelAlign: 'top',
+                        //     anchor:'100%',
+                        //     allowBlank: false,
+                        //     hideLabel:true,
+                        //     fieldLabel:'封面图片',
+                        //     emptyText : '选择封面',
+                        //     mode : 'local',// 数据模式，local代表本地数据
+                        //     //readOnly : false,// 是否只读
+                        //     editable : false,// 是否允许输入
+                        //     //forceSelection : true,// 必须选择一个选项
+                        //     //blankText : '请选择',// 该项如果没有选择，则提示错误信息,
+                        //     labelStyle: 'font-weight:bold;padding-bottom:5px',
+                        //     store:Ext.create('Ext.data.Store', {
+                        //         fields: ['text', 'selected_image'],
+                        //         data : [
+                        //             {"text":"无封面", "selected_image":0},
+                        //             {"text":"选择封面", "selected_image":1}
+                        //         ]
+                        //     }),
+                        //     value:0,
+                        //     displayField:'text',
+                        //     valueField:'selected_image',
+                        //     listConfig: {
+                        //         listeners: {
+                        //             itemclick: function(list, record, eml, index,a,b) {
+                        //                 if(index==1){
+                        //                     var random = Ext.Date.format(new Date(),'timestamp');
+                        //                     var iframeid = "iframe-filemanager-"+random;
+                        //                     var imgwindow = "select-image-window";
+                        //                     Ext.create('Ext.window.Window', {
+                        //                         id:imgwindow,
+                        //                         title: '选择图片',
+                        //                         custom_variables:{image_id:'cover',filed_id:'cover_filed'},
+                        //                         maximizable:false,
+                        //                         resizable:false,
+                        //                         modal:true,
+                        //                         constrain: true,
+                        //                         width:800,
+                        //                         height:580,
+                        //                         html:'<iframe id="'+iframeid+'" style="width:100%;height:100%;border:0" src="public/filemanager/dialog.php?type=1&random="'+Math.random()+'></iframe>',
+                        //                         closable: true,
+                        //                         style: {
+                        //                             borderStyle: '0 solid #fff'
+                        //                         },
+                        //                         listeners:{
+                        //                             scope:this,
+                        //                             close:function(self){
+                        //                                 if(this.up('form').getForm().findField('cover').value==''){
+                        //                                     this.up('form').getForm().findField('combobox_image').setValue(0);
+                        //                                 }
+                        //                             },
+                        //                             afterrender:function(self){
+                        //                                 self.setLoading(true);
+                        //                                 subWin = window.frames[iframeid];
+                        //                                 if (window.attachEvent) {
+                        //                                     subWin.attachEvent("onload", function(){
+                        //                                     });
+                        //                                 }else {
+                        //                                     subWin.addEventListener("load", function(){
+                        //                                         self.setLoading(false);
+                        //                                     }, true);
+                        //                                 }
+                        //                             }
+                        //                         }
+                        //                     }).show();
+                        //                 }else{
+                        //                     this.up('form').getForm().findField('cover').setValue('');
+                        //                 }
+                        //             }
+                        //         }
+                        //     },
+                        //     listeners: {
+                        //         scope: this,
+                        //         change:function(combo,n,o){
+                        //             if(n==0){
+                        //                 var img_cover = combo.up('form').queryById('cover');
+                        //                 img_cover.setSrc('');
+                        //                 img_cover.setVisible(false);
+                        //                 combo.setValue(combo.store.getAt(0));
+                        //             }else{
+                        //                 combo.setValue(combo.store.getAt(1));
+                        //             }
+                        //         }
+                        //     }
+                        // },
                         Ext.create('Ext.Img', {
                             itemId:'cover',
                             src: '',
                             hidden:true,
-                            padding:'5px 0 0 0',
+                            // padding:'-5px 0 0 0',
+                            margin:'-10px 0 0 0',
                             anchor:'100%'
                         })]
                     }]
@@ -484,9 +538,11 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                         title:'图片列表',
                         layout: 'border',
                         xtype:'panel',
-                        itemId:'abcddd',
                         hideMode:'offsets',
                         listeners:{
+                            afterrender: function(){
+                                // me.queryById('commodityUpload').post_params = {'dir':me.dirname};
+                            }
                         },
                         // bodyStyle:'background:white;',
                         margin:'-5 -5 -5 -5',
@@ -522,6 +578,9 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                // removeBtnText : '移除所有',
                                // cancelBtnText : '取消上传',
                                // file_size_limit : 10000,//MB
+                               // post_params:{"dir":'"'+me.dirname+''},
+                               file_size_limit:10,
+                               file_types:'*.jpg;*.png;*.gif;',
                                upload_url : 'admin/common/upload',
                                store : Ext.create('Ext.data.JsonStore',{
                                     fields : ['id','name','type','size','percent','status','fileName'],
@@ -537,15 +596,13 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                                 var list = me.queryById('commodityImageList');
                                                 var listStore = list.getStore();
                                                 if(record.data.serverData){
-                                                    console.log(record.data.serverData);
                                                     var saveData = {
                                                         name: record.data.serverData.savename,
-                                                        dir: '', //me.dirname,
+                                                        // dir: me.dirname,
                                                         size: record.data.serverData.size,
                                                         tip: record.data.serverData.key
                                                     };
                                                     listStore.add(saveData);
-                                                    console.log(listStore);
                                                     self.remove(record);
                                                 }
                                             }
@@ -595,7 +652,7 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                                     Ext.Array.forEach(context.store.data.items, function(item, index){
                                                         var saveData = {
                                                             name: item.data.name,
-                                                            dir: item.data.dir,
+                                                            // dir: me.dirname,
                                                             size: item.data.size,
                                                             tip: item.data.tip
                                                         };
@@ -641,7 +698,7 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                                 Ext.Array.forEach(self.data.items, function(item, index){
                                                     var saveData = {
                                                         name: item.data.name,
-                                                        dir: me.dirname,
+                                                        // dir: me.dirname,
                                                         size: item.data.size,
                                                         tip: item.data.tip
                                                     };
@@ -659,14 +716,6 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                     }
                                 }),
                                 columns: [
-                                    // {
-                                    //     text: '#',
-                                    //     dataIndex: 'id',
-                                    //     width:50,
-                                    //     hidden:true,
-                                    //     resizable:false,
-                                    //     sortable:false
-                                    // },
                                     {
                                         text:'',
                                         width:45,
@@ -674,11 +723,10 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                         resizable:false,
                                         sortable:false,
                                         renderer:function(value,metaData,record,rowIndex,colIndex,store,view){
-                                            console.log(record);
                                             var vv = Ext.util.Format.stripTags(value);
                                             var path = 'upload/tmp/'+vv;
                                             if(record.data.dir!=''){
-                                                path = 'upload/commodity/'+record.data.dir+'/'+vv;
+                                                path = 'upload/commodity/'+record.data.dir+'/list/'+vv;
                                             }
                                             metaData.tdAttr = 'data-qtip="<img style=max-width:200px src='+path+' />"';
                                             metaData.style = "position: absolute;";
@@ -2142,6 +2190,7 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                     },{
                         title: '参数集',
                         layout: 'auto',
+                        autoScroll:true,
                         // hidden:true,
                         items: [{
                                 xtype:'textarea',
@@ -2174,6 +2223,11 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                             },{
                                 xtype: 'textarea',
                                 name: 'images',
+                                width: '100%',
+                                hidden: false
+                            },{
+                                xtype: 'textarea',
+                                name: 'details_image_list',
                                 width: '100%',
                                 hidden: false
                             }]
@@ -2350,11 +2404,10 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                                         }
                                                     }
                                                     if(response.data.cover){
-                                                        form.findField('combobox_image').setValue(1);
-                                                        me.queryById('cover').setSrc(response.data.cover);
+                                                        var path = 'upload/commodity/'+response.data.id+'/cover/';
+                                                        me.queryById('cover').setSrc(path+response.data.cover);
                                                         me.queryById('cover').setVisible(true);
                                                     }else{
-                                                        form.findField('combobox_image').setValue(0);
                                                         form.owner.queryById('cover').setSrc('');
                                                         form.owner.queryById('cover').setVisible(false);
                                                     }
@@ -2501,6 +2554,32 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                                         }
                                                     }
 
+                                                    var commodityImageList = me.queryById('commodityImageList');
+                                                     if(commodityImageList){
+                                                        if(response.data.images){
+                                                            var images = Ext.JSON.decode(response.data.images);
+                                                            Ext.Array.forEach(images, function(item, key){
+                                                                item.dir = response.data.id;
+                                                            });
+                                                            commodityImageList.getStore().loadData(images);
+                                                        }
+                                                    }
+
+                                                    // if(response.data.details_image_list){
+                                                    //     var details_images = Ext.JSON.decode(response.data.details_image_list);
+                                                    //     var tiny = Ext.get(me.down('tinymce').id+'-inputEl_ifr');
+                                                    //     if(tiny){
+                                                    //         var details_image_list= tinymce.activeEditor.dom.select('[data-mce-src]');
+                                                    //         if(details_image_list){
+                                                    //             Ext.Array.forEach(details_image_list, function(items, index){
+                                                    //                 var exp = items.dataset.mceSrc.split('/');
+                                                    //                 var ur = 'upload/commodity/'+response.data.id+'/details/'+exp[exp.length-1];
+                                                    //                 items.src = ur;
+                                                    //             });
+                                                    //         }
+                                                    //     }
+                                                    // }
+
                                                     Ext.create('Xnfy.util.common').uxNotification(true,'获取数据成功');
                                                     self.up('form').setLoading(false);
                                                 }else{
@@ -2531,6 +2610,12 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                             var form = self.up('form').getForm();
                             var values = form.getFieldValues(true);
                             form.reset();
+
+                            var cover = me.queryById('cover');
+                            if(cover){
+                                cover.setSrc('');
+                                cover.setVisible(false);
+                            }
 
                             var render_params = form.findField('render_params');
                             if(render_params){
@@ -2629,7 +2714,7 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                 var classify_values = commodity_classify.getValues(false,true);
                                 var values = form.getFieldValues(true);
                                 var params = {
-                                        dir: me.dir,
+                                        // dir: me.dirname,
                                         district:datas.parent.id,
                                         category:datas.id,
                                         classifys:null
@@ -2657,6 +2742,12 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                                 center.setActiveTab(tab);
                                             }
                                             form.reset();
+
+                                            var cover = me.queryById('cover');
+                                            if(cover){
+                                                cover.setSrc('');
+                                                cover.setVisible(false);
+                                            }
 
                                             var render_params = form.findField('render_params');
                                             if(render_params){
@@ -2741,6 +2832,8 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                                     allowDrag:false
                                                 });
                                             }
+
+                                            me.dirname = Ext.Date.format(new Date(), 'time');
 
                                             forms.queryById('base').expand();
                                             tabpanelCenter.setActiveTab(0);
