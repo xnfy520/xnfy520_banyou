@@ -5,8 +5,8 @@ Ext.define('Xnfy.store.CommodityList', {
     ],
     model: 'Xnfy.model.CommodityList',
     storeId: 'CommodityList',
-    sorters:[{property:'id',direction:'DESC'}],
-    groupers:[{property:'name',direction:'ASC'},{property:'master',direction:'DESC'}],
+    // sorters:[{property:'id',direction:'DESC'}],
+    groupers:[{property:'id',direction:'DESC'},{property:'name',direction:'ASC'},{property:'master',direction:'DESC'}],
     groupField: 'name',
     constructor: function(cfg) {
         var me = this;
@@ -42,7 +42,7 @@ Ext.define('Xnfy.store.CommodityList', {
             listeners: {
                 beforeload: function(t){
                     var tab = Ext.getCmp("center").getActiveTab();
-                    if(tab.data){
+                    if(tab && tab.data){
                         var brand_search = tab.queryById('brandSearch');
                         var data = {category: tab.data.id};
                         if(brand_search){

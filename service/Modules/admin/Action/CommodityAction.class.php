@@ -209,6 +209,44 @@ class CommodityAction extends CommonAction {
 		}
 	}
 
+	function delete(){
+		if(isset($_POST['ids'])){
+			$ids = explode(',', $_POST['ids']);
+			if(count($ids)>0){
+				$MODULE_NAME = M(MODULE_NAME);
+				for($i=0;$i<count($ids);$i++){
+					$data = $MODULE_NAME->find($ids[$i]);
+					if(!empty($data['cover'])){
+						$this->CommodityFileManages('cover',$data['cover'], $ids[$i], 'delete');
+					}
+					if(!empty($data['images'])){
+						$images = json_decode($data['images'], true);
+						$this->CommodityFileManages('list',$images, $ids[$i], 'delete');
+					}
+					$destDir = 'upload/commodity/'.$ids[$i];
+					if(file_exists($destDir)){
+						rmdir($destDir);
+					}
+					$MODULE_NAME->delete($ids[$i]);
+				}
+				echo json_encode(array(
+						"success"=>true,
+						"data"=>null
+					));
+			}else{
+				echo json_encode(array(
+						"success"=>false,
+						"errors"=>array("msg"=>"异常操作")
+					));
+			}
+		}else{
+			echo json_encode(array(
+						"success"=>false,
+						"errors"=>array("msg"=>"异常操作")
+					));
+		}
+	}
+
 	function getFilter(){
 		if(isset($_POST['id']) && isset($_POST['indexing'])){
 			$Classify = M('Classify');

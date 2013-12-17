@@ -71,7 +71,7 @@ Ext.define('Ext.ux.uploadPanel',{
   //           }]
   //       }
     ],
-    store : Ext.create('Ext.data.JsonStore',{
+    store : Ext.create('Ext.data.Store',{
 		autoLoad : false,
 		fields : ['id','name','type','size','percent','status','fileName']
     }),
@@ -127,7 +127,7 @@ Ext.define('Ext.ux.uploadPanel',{
 				disabled : true,
 				text : this.removeBtnText,
 				scope : this,
-				handler : this.onRemove
+				handler : this.onRemoves
 			},{
 				xtype : 'button',
 				itemId : 'cancelBtn',
@@ -357,7 +357,7 @@ Ext.define('Ext.ux.uploadPanel',{
 			}
 		}
 	},
-	onRemove : function(){ //删除操作
+	onRemoves : function(){ //删除操作
 		var sm = this.getSelectionModel().getSelection(); //获取选中记录
 		var st = this.store; //获取数据集
 		for(var i=0;i<sm.length;i++){ //遍历选中记录

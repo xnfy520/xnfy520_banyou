@@ -193,12 +193,12 @@ Ext.define('Xnfy.view.ArticleList', {
                                                             if(items.leaf){
                                                                 pids.push(items.id);
                                                             }else{
-                                                                if(items.children.length>0){
+                                                                if(items.children && items.children.length>0){
                                                                      Ext.Array.forEach(items.children, function(itemx, indexx){
                                                                         if(itemx.leaf){
                                                                             pids.push(itemx.id);
                                                                         }else{
-                                                                            if(itemx.children.length>0){
+                                                                            if(itemx.children && itemx.children.length>0){
                                                                                 Ext.Array.forEach(itemx.children, function(item, index){
                                                                                     pids.push(item.id);
                                                                                 });

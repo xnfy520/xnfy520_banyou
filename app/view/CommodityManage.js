@@ -20,7 +20,12 @@ Ext.define('Xnfy.view.CommodityManage', {
                             selType:'checkboxmodel',
                             features: [{
                                 ftype:'grouping',
-                                groupHeaderTpl: '商品: <strong style="color:#157FCC">{name}</strong> <i>( {rows.length} )</i>',
+                                groupHeaderTpl:[
+                                '商品: <strong style="color:#157FCC">{rows:this.getName}</strong> <i>( {rows.length} )</i>',{
+                                    getName: function(datas) {
+                                        return datas[0].data.name;
+                                    }
+                                }],
                                 hideGroupedHeader: true,
                                 startCollapsed: false,
                                 enableGroupingMenu:false
@@ -31,6 +36,17 @@ Ext.define('Xnfy.view.CommodityManage', {
                             viewConfig: {
                                 stripeRows: true
                             },
+                            // plugins: [
+                            //     Ext.create('Ext.grid.plugin.CellEditing', {
+                            //         clicksToEdit: 1,
+                            //         listeners : {
+                            //             beforeedit : function(e,obj) {
+                            //             },
+                            //             edit:function(editor, context){
+                            //             }
+                            //         }
+                            //     })
+                            // ],
                             border:false,
                             store: Ext.create('Xnfy.store.CommodityList'),
                             columns: [
@@ -40,6 +56,23 @@ Ext.define('Xnfy.view.CommodityManage', {
                                     width:60,
                                     hidden:true,
                                     groupable:false
+                                },
+                                {
+                                    text: '',
+                                    dataIndex: 'master',
+                                    width:45,
+                                    // align:'center',
+                                    groupable:false,
+                                    renderer:function(value,metaData,record,rowIndex,colIndex,store,view){
+                                        var i;
+                                        if(value==1){
+                                            i = '<img src="public/images/online.png" />';
+                                        }else{
+                                            i = '<img src="public/images/offline.png" />';
+                                        }
+                                        // value = (value==1) ? ' <span class="icon-circle" style="color:red"></span>' : '';
+                                        return i;
+                                    }
                                 },
                                 {
                                     text: '商品名称',
@@ -53,23 +86,6 @@ Ext.define('Xnfy.view.CommodityManage', {
                                     dataIndex: 'title',
                                     flex: 1,
                                     groupable:false
-                                },
-                                {
-                                    text: '',
-                                    dataIndex: 'master',
-                                    width:50,
-                                    align:'center',
-                                    groupable:false,
-                                    renderer:function(value,metaData,record,rowIndex,colIndex,store,view){
-                                        var i;
-                                        if(value==1){
-                                            i = '<img src="public/images/online.png" />';
-                                        }else{
-                                            i = '<img src="public/images/offline.png" />';
-                                        }
-                                        // value = (value==1) ? ' <span class="icon-circle" style="color:red"></span>' : '';
-                                        return i;
-                                    }
                                 },
                                 {
                                     text:'商品价格',
@@ -102,6 +118,10 @@ Ext.define('Xnfy.view.CommodityManage', {
                                     text: '排序',
                                     dataIndex: 'sort',
                                     width:70,
+                                    editor: {
+                                        xtype: 'numberfield',
+                                        style: 'text-align: right'
+                                    },
                                     align:'center',
                                     groupable:false
                                 },
@@ -233,7 +253,17 @@ Ext.define('Xnfy.view.CommodityManage', {
                                             listeners:{
                                                 scope:this,
                                                 click:function(button){
-                                                    button.up('gridpanel').nextSibling('form').expand();
+                                                    var center = Ext.getCmp("center");
+                                                    var panel = center.getComponent(this.data.indexing+'-add-'+this.data.id);
+                                                    if(panel){
+                                                        center.setActiveTab(panel);
+                                                    }else{
+                                                        panel = Ext.create('Xnfy.view.CommodityManageAdd');
+                                                        panel.setTitle('添加 '+this.data.text+'商品');
+                                                        panel.id = this.data.indexing+'-add-'+this.data.id;
+                                                        panel.data = this.data;
+                                                        center.setActiveTab(center.add(panel));
+                                                    }
                                                 }
                                             }
                                         },
@@ -245,7 +275,48 @@ Ext.define('Xnfy.view.CommodityManage', {
                                             disabled:true,
                                             listeners:{
                                                 scope:this,
-                                                click:function(t){
+                                                click:function(button){
+                                                    var gridpanel = button.up('gridpanel');
+                                                    if(gridpanel.getSelectionModel().getCount()<=0){
+                                                        Ext.create('Xnfy.util.common').uxNotification(false,'请选择要删除的数据');
+                                                        return false;
+                                                    }
+                                                    var datas = gridpanel.getSelectionModel().getSelection();
+                                                    var ids = [];
+                                                    Ext.Array.forEach(datas,function(item,index,all){
+                                                        ids.push(parseInt(item.internalId,0));
+                                                    });
+                                                    Ext.MessageBox.show({
+                                                        title:'删除数据?',
+                                                        msg: '确认删除所选数据?',
+                                                        buttons: Ext.MessageBox.YESNO,
+                                                        buttonText:{
+                                                            yes: "确认",
+                                                            no: "取消"
+                                                        },
+                                                        fn: function(btn){
+                                                            if(btn=='yes'){
+                                                                if(ids.length>0){
+                                                                    Ext.Ajax.request({
+                                                                        url:"admin/commodity/delete",
+                                                                        method:'POST',
+                                                                        params:{ids:ids.toString()},
+                                                                        callback:function(records, operation, success){
+                                                                            var response = Ext.JSON.decode(success.responseText);
+                                                                            if(response.success){
+                                                                                gridpanel.getSelectionModel().deselectAll();
+                                                                                gridpanel.getStore().reload();
+                                                                                Ext.create('Xnfy.util.common').uxNotification(true,'删除数据成功');
+                                                                            }else{
+                                                                                Ext.create('Xnfy.util.common').uxNotification(false,'删除数据失败');
+                                                                            }
+                                                                        }
+                                                                    });
+                                                                }
+                                                            }
+                                                        },
+                                                        icon: Ext.MessageBox.QUESTION
+                                                    });
                                                 }
                                             }
                                         }
@@ -258,7 +329,28 @@ Ext.define('Xnfy.view.CommodityManage', {
                                     displayInfo: true,
                                     plugins: Ext.create('Ext.ux.ProgressBarPager', {})
                                 }
-                            ]
+                            ],
+                            listeners:{
+                                scope:this,
+                                selectionchange:function(t, r){
+                                    if(r.length==1){
+                                        this.child('gridpanel').getDockedItems('toolbar [itemId=edit]')[0].setDisabled(false);
+                                        this.child('gridpanel').getDockedItems('toolbar [itemId=delete]')[0].setDisabled(false);
+                                    }else if(r.length>0){
+                                        this.child('gridpanel').getDockedItems('toolbar [itemId=edit]')[0].setDisabled(true);
+                                        this.child('gridpanel').getDockedItems('toolbar [itemId=delete]')[0].setDisabled(false);
+                                    }else{
+                                        this.child('gridpanel').getDockedItems('toolbar [itemId=edit]')[0].setDisabled(true);
+                                        this.child('gridpanel').getDockedItems('toolbar [itemId=delete]')[0].setDisabled(true);
+                                    }
+                                },
+                                celldblclick:function(self, td, cellIndex, record, tr, rowIndex, e, eOpts){
+                                    if(record){
+                                        console.log(record);
+                                        // me.edit_article(this.id,record.data.id);
+                                    }
+                                }
+                            }
                         }
                     ]
         });

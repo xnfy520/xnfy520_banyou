@@ -3,9 +3,6 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
     requires: [
         'Ext.ux.ProgressBarPager',
         'Xnfy.util.common',
-        'Ext.ux.DataView.Draggable',
-        'Ext.ux.DataView.DragSelector',
-        'Ext.ux.DataView.Animated',
         'Ext.ux.UploadButton'
     ],
     alias: 'widget.commoditymanageadd',
@@ -13,6 +10,8 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
     closable: true,
     layout: {
         type: 'fit'
+    },
+    listeners:{
     },
     initComponent: function() {
         var me = this;
@@ -23,7 +22,7 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                 layout:'border',
                 listeners:{
                     render:function(){
-                        if(me.data.parent){
+                        if(me.data && me.data.parent){
                             Ext.Ajax.request({
                                 url:"admin/article/getRelation",
                                 method:'POST',
@@ -137,12 +136,14 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                             minValue: 0,
                             listeners:{
                                 render:function(self){
-                                    var datas = self.up('commoditymanageadd').data;
-                                    Ext.Array.forEach(hid,function(item,index,all){
-                                        if(datas.parent.indexing==item){
-                                            self.setVisible(true);
-                                        }
-                                    });
+                                    //var datas = self.up('commoditymanageadd').data;
+                                    if(me.data){
+                                        Ext.Array.forEach(hid,function(item,index,all){
+                                            if(me.data.parent.indexing==item){
+                                                self.setVisible(true);
+                                            }
+                                        });
+                                    }
                                 }
                             }
                         }]
@@ -161,7 +162,8 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                         ],
                         listeners:{
                             render:function(self){
-                                var datas = self.up('commoditymanageadd').data;
+                                // var datas = self.up('commoditymanageadd').data;
+                                var datas = me.data;
                                 if(datas && self.items.length<=0){
                                     Ext.Ajax.request({
                                         url:"admin/commodity/getFilter",
@@ -249,14 +251,18 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                         file_types:'*.jpg;*.png;*.gif;',
                                         multiple:false,
                                         listeners:{
-                                            onSay:function(file, serverData){
+                                            onSay:function(file){
                                                 var cover = me.queryById('cover');
                                                 var filed = me.queryById('cover_filed');
                                                 var serverDatas = Ext.JSON.decode(file.serverData);
                                                 var datas = serverDatas.data;
-                                                filed.setValue(datas.savename);
-                                                cover.setSrc(datas.savepath+datas.savename);
-                                                cover.setVisible(true);
+                                                if(filed && datas){
+                                                    filed.setValue(datas.savename);
+                                                }
+                                                if(cover && datas){
+                                                    cover.setSrc(datas.savepath+datas.savename);
+                                                    cover.setVisible(true);
+                                                }
                                             }
                                         }
                                     }),
@@ -268,10 +274,14 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                         listeners:{
                                             click: function(self){
                                                 var cover = me.queryById('cover');
-                                                cover.setSrc('');
-                                                cover.setVisible(false);
+                                                if(cover){
+                                                    cover.setSrc('');
+                                                    cover.setVisible(false);
+                                                }
                                                 var filed = me.queryById('cover_filed');
-                                                filed.setValue('');
+                                                if(filed){
+                                                    filed.setValue('');
+                                                }
                                             }
                                         }
                                     }
@@ -290,10 +300,12 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                             listeners:{
                                 change: function(self, newValue, oldValue, eOpts){
                                     var removeCover = me.queryById('removeCover');
-                                    if(newValue){
-                                        removeCover.setVisible(true);
-                                    }else{
-                                        removeCover.setVisible(false);
+                                    if(removeCover){
+                                        if(newValue){
+                                            removeCover.setVisible(true);
+                                        }else{
+                                            removeCover.setVisible(false);
+                                        }
                                     }
                                 }
                             }
@@ -395,7 +407,8 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                             anchor:'100%'
                         })]
                     }]
-                },{
+                },
+                {
                     xtype:'tabpanel',
                     region:'center',
                     itemId:'tabpanelCenter',
@@ -481,7 +494,8 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                             }
                         }
                     },
-                    items:[{
+                    items:[
+                    {
                         tabConfig: {
                             style:'margin:0 1px 0 5px'
                         },
@@ -534,7 +548,8 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                     }
                                 }
                             }
-                    },{
+                    },
+                    {
                         title:'图片列表',
                         layout: 'border',
                         xtype:'panel',
@@ -582,7 +597,8 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                file_size_limit:10,
                                file_types:'*.jpg;*.png;*.gif;',
                                upload_url : 'admin/common/upload',
-                               store : Ext.create('Ext.data.JsonStore',{
+                               store : Ext.create('Ext.data.Store',{
+                                    autoLoad : false,
                                     fields : ['id','name','type','size','percent','status','fileName'],
                                     listeners:{
                                         add: function(store, records, index){
@@ -769,95 +785,9 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                     }]
                                 }]
                             }
-                           // {
-                           //      xtype:'dataview',
-                           //      style:'background:white',
-                           //      region: 'center',
-                           //      disableSelection:false,
-                           //      plugins : [
-                           //          // Ext.create('Ext.ux.DataView.Draggable', {
-                           //          // }),
-                           //          Ext.create('Ext.ux.DataView.DragSelector', {
-                           //          })
-                           //      ],
-                           //      flex: 0.3,
-                           //      itemSelector: 'div.commodityImage',
-                           //      // overItemCls : 'phone-hover',
-                           //      multiSelect : true,
-                           //      autoScroll:true,
-                           //      trackOver: true,
-                           //      listeners:{
-                           //          'afterrender': function(self){
-                           //              Ext.create('Ext.view.DragZone', {
-                           //                  view: self,
-                           //                  ddGroup: 'commodityImage',
-                           //                  dragText: 'test'
-                           //              });
-                           //              Ext.create('Ext.view.DropZone', {
-                           //                  view: self,
-                           //                  ddGroup: 'commodityImage',
-                           //                  handleNodeDrop : function(data, record, position) {
-                           //                      var view = self,
-                           //                          store = view.getStore(),
-                           //                          index, records, i, len;
-                           //                      if (data.copy) {
-                           //                          records = data.records;
-                           //                          data.records = [];
-                           //                          for (i = 0, len = records.length; i < len; i++) {
-                           //                              data.records.push(records[i].copy(records[i].getId()));
-                           //                          }
-                           //                      } else {
-                           //                          data.view.store.remove(data.records, data.view === view);
-                           //                      }
-                           //                      index = store.indexOf(record);
-                           //                      if (position !== 'before') {
-                           //                          index++;
-                           //                      }
-                           //                      store.insert(index, data.records);
-                           //                      // view.getSelectionModel().select(data.records);
-                           //                  }
-                           //              });
-                           //          },
-                           //          'itemcontextmenu' : function(menutree, selected, items, index, e) {
-                           //              var nodemenu = new Ext.menu.Menu({});
-                           //              e.preventDefault();
-                           //              e.stopEvent();
-                           //              nodemenu = new Ext.menu.Menu({
-                           //                  floating : true,
-                           //                  items : [{
-                           //                      text : "移除所选项",
-                           //                      handler : function(self) {
-                           //                          menutree.getStore().remove(selected);
-                           //                      }
-                           //                  }]
-                           //              });
-                           //              nodemenu.showAt(e.getXY());
-                           //          }
-                           //      },
-                           //      store:Ext.create('Ext.data.Store', {
-                           //          fields: [
-                           //              { name:'src', type:'string' },
-                           //              { name:'caption', type:'string' }
-                           //          ],
-                           //          data: [
-                           //              { src:'http://www.sencha.com/img/20110215-feat-drawing.png', caption:'Drawing & Charts' },
-                           //              { src:'http://www.sencha.com/img/20110215-feat-data.png', caption:'Advanced Data' },
-                           //              { src:'http://www.sencha.com/img/20110215-feat-html5.png', caption:'Overhauled Theme' },
-                           //              { src:'http://www.sencha.com/img/20110215-feat-html5.png', caption:'Overhauled Theme' }
-                           //          ]
-                           //      }),
-                           //      tpl:new Ext.XTemplate(
-                           //          '<tpl for=".">',
-                           //              '<div style="margin: 5px;padding:5px;" class="commodityImage">',
-                           //                '<img style="width:100%" src="{src}" />',
-                           //                '<br/><span>{caption}</span>',
-                           //              '</div>',
-                           //          '</tpl>',
-                           //          '<div class="x-clear"></div>'
-                           //      )
-                           //  }
                         ]
-                    },{
+                    },
+                    {
                         title: '库存状态',
                         xtype:'treepanel',
                         itemId:'commodityInventory',
@@ -2231,8 +2161,10 @@ Ext.define('Xnfy.view.CommodityManageAdd', {
                                 width: '100%',
                                 hidden: false
                             }]
-                    }]
-                }],
+                    }
+                    ]
+                }
+                ],
                 dockedItems: [{
                     xtype: 'toolbar',
                     dock: 'bottom',

@@ -63,17 +63,17 @@ Ext.define('Xnfy.store.LinkList', {
                                 var datas = node.serialize();
                                 var pids = [];
                                 pids.push(search_pid);
-                                if(datas.children.length>0){
+                                if(datas.children && datas.children.length>0){
                                     Ext.Array.forEach(datas.children,function(items, indexs){
                                         if(items.leaf){
                                             pids.push(items.id);
                                         }else{
-                                            if(items.children.length>0){
+                                            if(items.children && items.children.length>0){
                                                  Ext.Array.forEach(items.children, function(itemx, indexx){
                                                     if(itemx.leaf){
                                                         pids.push(itemx.id);
                                                     }else{
-                                                        if(itemx.children.length>0){
+                                                        if(itemx.children && itemx.children.length>0){
                                                             Ext.Array.forEach(itemx.children, function(item, index){
                                                                 pids.push(item.id);
                                                             });

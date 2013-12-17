@@ -7,77 +7,101 @@
 			//unset($_SESSION['admin@']);
 		}
 
-		function CommodityFileManages($type='list', $files, $id=''){
+		function CommodityFileManages($type='list', $files, $id='', $action=''){
 			import("thumbLib");
 			if(empty($files)){
 				return false;
 			}
 			$tmpDir = 'upload/tmp/';
 			$destDir = 'upload/commodity/'.$id.'/'.$type.'/';
-			if(!file_exists($destDir)){ //存在目标目录
-				mkdir($destDir, 0777, true);
-			}
-			switch($type){
-				case 'list':
-					foreach($files as $key=>$value){ //遍历文件
-						if(file_exists($tmpDir.$value['name'])){ //否而在临时文件夹中存在文件
-							$thumb = PhpThumbFactory::create($tmpDir.$value['name']);
+			if($action==''){
+				if(!file_exists($destDir)){ //存在目标目录
+					mkdir($destDir, 0777, true);
+				}
+				switch($type){
+					case 'list':
+						foreach($files as $key=>$value){ //遍历文件
+							if(file_exists($tmpDir.$value['name'])){ //否而在临时文件夹中存在文件
+								$thumb = PhpThumbFactory::create($tmpDir.$value['name']);
+								if($thumb){
+									if(file_exists($tmpDir.'min_'.$value['name'])){
+										rename($tmpDir.'min_'.$value['name'], $destDir.'min_'.$value['name']);
+									}else{
+										$thumb->resizePercent(50);
+										$thumb->save($destDir.'min_'.$value['name']);
+									}
+									if(file_exists($tmpDir.'cut_'.$value['name'])){
+										rename($tmpDir.'cut_'.$value['name'], $destDir.'cut_'.$value['name']);
+									}else{
+										$thumb->resizePercent(50);
+										$currentInfo = $thumb->getCurrentDimensions();
+										if($currentInfo['width']<200){
+											$thumb->cropFromCenter(150)->save($destDir.'cut_'.$value['name']);
+										}else{
+											$thumb->cropFromCenter(200)->save($destDir.'cut_'.$value['name']);
+										}
+									}
+								}
+								rename($tmpDir.$value['name'],$destDir.$value['name']);
+							}
+						}
+					break;
+					case 'cover':
+						$file = $tmpDir.$files;
+						if(file_exists($file)){
+							$thumb = PhpThumbFactory::create($file);
 							if($thumb){
-								if(file_exists($tmpDir.'min_'.$value['name'])){
-									rename($tmpDir.'min_'.$value['name'], $destDir.'min_'.$value['name']);
+								if(file_exists($tmpDir.'min_'.$files)){
+									rename($tmpDir.'min_'.$files, $destDir.'min_'.$files);
 								}else{
 									$thumb->resizePercent(50);
-									$thumb->save($destDir.'min_'.$value['name']);
+									$thumb->save($destDir.'min_'.$files);
 								}
-								if(file_exists($tmpDir.'cut_'.$value['name'])){
-									rename($tmpDir.'cut_'.$value['name'], $destDir.'cut_'.$value['name']);
+								if(file_exists($tmpDir.'cut_'.$files)){
+									rename($tmpDir.'cut_'.$files, $destDir.'cut_'.$files);
 								}else{
 									$thumb->resizePercent(50);
 									$currentInfo = $thumb->getCurrentDimensions();
 									if($currentInfo['width']<200){
-										$thumb->cropFromCenter(150)->save($destDir.'cut_'.$value['name']);
+										$thumb->cropFromCenter(150)->save($destDir.'cut_'.$files);
 									}else{
-										$thumb->cropFromCenter(200)->save($destDir.'cut_'.$value['name']);
+										$thumb->cropFromCenter(200)->save($destDir.'cut_'.$files);
 									}
 								}
 							}
-							rename($tmpDir.$value['name'],$destDir.$value['name']);
+							rename($file,$destDir.$files);
 						}
+					break;
+				}
+			}else if($action=='delete'){
+				if(!file_exists($destDir)){
+					return false;
+				}
+				if(is_string($files)){
+					if(file_exists($destDir.$files)){
+						unlink($destDir.$files);
 					}
-				break;
-				case 'cover':
-					$file = $tmpDir.$files;
-					if(file_exists($file)){
-						$thumb = PhpThumbFactory::create($file);
-						if($thumb){
-							if(file_exists($tmpDir.'min_'.$files)){
-								rename($tmpDir.'min_'.$files, $destDir.'min_'.$files);
-							}else{
-								$thumb->resizePercent(50);
-								$thumb->save($destDir.'min_'.$files);
-							}
-							if(file_exists($tmpDir.'cut_'.$files)){
-								rename($tmpDir.'cut_'.$files, $destDir.'cut_'.$files);
-							}else{
-								$thumb->resizePercent(50);
-								$currentInfo = $thumb->getCurrentDimensions();
-								if($currentInfo['width']<200){
-									$thumb->cropFromCenter(150)->save($destDir.'cut_'.$files);
-								}else{
-									$thumb->cropFromCenter(200)->save($destDir.'cut_'.$files);
-								}
-							}
+					if(file_exists($destDir.'min_'.$files)){
+						unlink($destDir.'min_'.$files);
+					}
+					if(file_exists($destDir.'cut_'.$files)){
+						unlink($destDir.'cut_'.$files);
+					}
+					rmdir($destDir);
+				}else if(is_array($files)){
+					foreach($files as $key=>$value){
+						if(file_exists($destDir.$value['name'])){
+							unlink($destDir.$value['name']);
 						}
-						rename($file,$destDir.$files);
-					}
-				break;
-				case 'details':
-					foreach($files as $key=>$value){ //遍历文件
-						if(file_exists($tmpDir.$value)){ //否而在临时文件夹中存在文件
-							rename($tmpDir.$value,$destDir.$value);
+						if(file_exists($destDir.'min_'.$value['name'])){
+							unlink($destDir.'min_'.$value['name']);
 						}
+						if(file_exists($destDir.'cut_'.$value['name'])){
+							unlink($destDir.'cut_'.$value['name']);
+						}
+						rmdir($destDir);
 					}
-				break;
+				}
 			}
 		}
 
